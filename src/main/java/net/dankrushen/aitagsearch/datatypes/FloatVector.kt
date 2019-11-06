@@ -1,4 +1,4 @@
-package net.dankrushen.aitagsearch.types
+package net.dankrushen.aitagsearch.datatypes
 
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVectorWithoutLength

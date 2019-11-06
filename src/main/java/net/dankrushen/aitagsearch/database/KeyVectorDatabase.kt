@@ -1,10 +1,10 @@
 package net.dankrushen.aitagsearch.database
 
+import net.dankrushen.aitagsearch.datatypes.FloatVector
+import net.dankrushen.aitagsearch.datatypes.KeyVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVectorWithoutLength
 import net.dankrushen.aitagsearch.extensions.toUnsafeBuffer
-import net.dankrushen.aitagsearch.types.FloatVector
-import net.dankrushen.aitagsearch.types.KeyVector
 import org.agrona.DirectBuffer
 import org.lmdbjava.Dbi
 import org.lmdbjava.DbiFlags

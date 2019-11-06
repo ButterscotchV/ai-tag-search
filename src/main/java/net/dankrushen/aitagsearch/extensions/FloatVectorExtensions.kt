@@ -1,6 +1,6 @@
 package net.dankrushen.aitagsearch.extensions
 
-import net.dankrushen.aitagsearch.types.FloatVector
+import net.dankrushen.aitagsearch.datatypes.FloatVector
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 
