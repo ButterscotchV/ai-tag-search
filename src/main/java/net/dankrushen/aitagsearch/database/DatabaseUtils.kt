@@ -16,8 +16,6 @@ object DatabaseUtils {
         return byteBuffer
     }
 
-    fun directBufferToString(directBuffer: DirectBuffer): String = directBuffer.getStringUtf8(0)
-
     fun createEnv(file: File, estimatedSizeBytes: Long, numDb: Int): Env<DirectBuffer> {
         return Env.create(DirectBufferProxy.PROXY_DB)
                 // An estimate of how large the database might be

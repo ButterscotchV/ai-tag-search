@@ -2,8 +2,7 @@ package net.dankrushen.aitagsearch.tests
 
 import net.dankrushen.aitagsearch.database.DatabaseUtils
 import net.dankrushen.aitagsearch.database.KeyVectorDatabase
-import net.dankrushen.aitagsearch.extensions.toFloatVector
-import net.dankrushen.aitagsearch.extensions.toUTF8String
+import net.dankrushen.aitagsearch.extensions.getFloatVector
 import net.dankrushen.aitagsearch.extensions.toUnsafeBuffer
 import net.dankrushen.aitagsearch.types.FloatVector
 import net.dankrushen.aitagsearch.types.KeyVector
@@ -25,8 +24,8 @@ fun main() {
             println("Original: ")
             println("\tKey: ${demoKeyVector.key}")
             println("\tVector: ${demoKeyVector.vector}")
-            println("\tEncoded Key: ${demoKeyVector.key.toUnsafeBuffer(env.maxKeySize).toUTF8String()}")
-            println("\tEncoded Vector: ${demoKeyVector.vector.toUnsafeBuffer().toFloatVector()}")
+            println("\tEncoded Key: ${demoKeyVector.key.toUnsafeBuffer(env.maxKeySize).getStringUtf8(0)}")
+            println("\tEncoded Vector: ${demoKeyVector.vector.toUnsafeBuffer().getFloatVector(0)}")
 
             var testKeyVectorResult: KeyVector? = null
 

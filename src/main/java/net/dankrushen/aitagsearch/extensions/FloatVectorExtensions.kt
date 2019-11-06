@@ -4,29 +4,50 @@ import net.dankrushen.aitagsearch.types.FloatVector
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 
-fun DirectBuffer.toFloatVector(): FloatVector = FloatVector.fromDirectBuffer(this)
-
-fun MutableDirectBuffer.putFloatVector(index: Int, value: FloatVector): Int {
-    this.putInt(index, value.dimension)
+fun MutableDirectBuffer.putFloatVectorWithoutLength(index: Int, value: FloatVector): Int {
+    var bytesWritten = 0
 
     for (i in 0 until value.dimension) {
-        // index + ((dimension count int + dimension value index) * integer bytes)
-        val dimIndex = index + ((1 + i) * Int.SIZE_BYTES)
+        val dimIndex = index + bytesWritten
+
         this.putFloat(dimIndex, value[i])
+        bytesWritten += Int.SIZE_BYTES
     }
 
-    return value.sizeBytes
+    return bytesWritten
 }
 
-fun DirectBuffer.getFloatVector(index: Int): FloatVector {
-    val dimension = this.getInt(index)
-    val floatVector = FloatVector(dimension)
+fun MutableDirectBuffer.putFloatVector(index: Int, value: FloatVector): Int {
+    var bytesWritten = 0
 
-    for (i in 0 until dimension) {
-        // index + ((dimension count int + dimension value index) * integer bytes)
-        val dimIndex = index + ((1 + i) * Int.SIZE_BYTES)
+    this.putInt(index, value.dimension)
+    bytesWritten += Int.SIZE_BYTES
+
+    bytesWritten += this.putFloatVectorWithoutLength(index + bytesWritten, value)
+
+    return bytesWritten
+}
+
+fun DirectBuffer.getFloatVectorWithoutLength(index: Int, length: Int): FloatVector {
+    var bytesRead = 0
+
+    val floatVector = FloatVector(length)
+
+    for (i in 0 until length) {
+        val dimIndex = index + bytesRead
+
         floatVector[i] = this.getFloat(dimIndex)
+        bytesRead += Int.SIZE_BYTES
     }
 
     return floatVector
+}
+
+fun DirectBuffer.getFloatVector(index: Int): FloatVector {
+    var bytesRead = 0
+
+    val dimension = this.getInt(index)
+    bytesRead += Int.SIZE_BYTES
+
+    return getFloatVectorWithoutLength(index + bytesRead, dimension)
 }

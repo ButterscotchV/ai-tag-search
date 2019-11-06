@@ -1,8 +1,9 @@
 package net.dankrushen.aitagsearch.types
 
 import net.dankrushen.aitagsearch.extensions.getFloatVector
+import net.dankrushen.aitagsearch.extensions.getFloatVectorWithoutLength
 import net.dankrushen.aitagsearch.extensions.putFloatVector
-import org.agrona.DirectBuffer
+import net.dankrushen.aitagsearch.extensions.putFloatVectorWithoutLength
 import org.agrona.concurrent.UnsafeBuffer
 import java.nio.ByteBuffer
 import kotlin.math.sqrt
@@ -34,16 +35,28 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
             return byteBuffer
         }
 
+        fun toUnsafeBufferWithoutLength(vector: FloatVector): UnsafeBuffer {
+            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytesWithoutLength))
+
+            byteBuffer.putFloatVectorWithoutLength(0, vector)
+
+            return byteBuffer
+        }
+
+        fun toByteArrayWithoutLength(vector: FloatVector): ByteArray {
+            return toUnsafeBufferWithoutLength(vector).byteArray()
+        }
+
         fun toByteArray(vector: FloatVector): ByteArray {
             return toUnsafeBuffer(vector).byteArray()
         }
 
-        fun fromDirectBuffer(directBuffer: DirectBuffer): FloatVector {
-            return directBuffer.getFloatVector(0)
+        fun fromByteArray(byteArray: ByteArray): FloatVector {
+            return UnsafeBuffer(byteArray).getFloatVector(0)
         }
 
-        fun fromByteArray(byteArray: ByteArray): FloatVector {
-            return fromDirectBuffer(UnsafeBuffer(byteArray))
+        fun fromByteArrayWithoutLength(byteArray: ByteArray, length: Int): FloatVector {
+            return UnsafeBuffer(byteArray).getFloatVectorWithoutLength(0, length)
         }
 
         fun toString(vector: FloatVector): String {
@@ -68,6 +81,9 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
     // One int for the dimension and one int of bytes per dimension
     val sizeBytes: Int
         get() = Int.SIZE_BYTES + (dimension * Int.SIZE_BYTES)
+
+    val sizeBytesWithoutLength: Int
+        get() = dimension * Int.SIZE_BYTES
 
     val dimension: Int
         get() = dims.size
@@ -105,7 +121,9 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
     }
 
     fun toUnsafeBuffer(): UnsafeBuffer = toUnsafeBuffer(this)
+    fun toUnsafeBufferWithoutLength(): UnsafeBuffer = toUnsafeBufferWithoutLength(this)
     fun toByteArray(): ByteArray = toByteArray(this)
+    fun toByteArrayWithoutLength(): ByteArray = toByteArrayWithoutLength(this)
     override fun toString(): String = toString(this)
 
     operator fun get(dimension: Int) = dims[dimension]

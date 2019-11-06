@@ -1,6 +1,7 @@
 package net.dankrushen.aitagsearch.database
 
-import net.dankrushen.aitagsearch.extensions.toFloatVector
+import net.dankrushen.aitagsearch.extensions.getFloatVector
+import net.dankrushen.aitagsearch.extensions.getFloatVectorWithoutLength
 import net.dankrushen.aitagsearch.extensions.toUnsafeBuffer
 import net.dankrushen.aitagsearch.types.FloatVector
 import net.dankrushen.aitagsearch.types.KeyVector
@@ -21,14 +22,26 @@ class KeyVectorDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closea
             txn.commit()
     }
 
-    fun getFloatVector(txn: Txn<DirectBuffer>, key: String): FloatVector? {
-        val value = db.get(txn, key.toUnsafeBuffer(env.maxKeySize)) ?: return null
+    fun getValue(txn: Txn<DirectBuffer>, key: String): DirectBuffer? {
+        return db.get(txn, key.toUnsafeBuffer(env.maxKeySize))
+    }
 
-        return value.toFloatVector()
+    fun getFloatVector(txn: Txn<DirectBuffer>, key: String): FloatVector? {
+        return getValue(txn, key)?.getFloatVector(0)
+    }
+
+    fun getFloatVectorWithoutLength(txn: Txn<DirectBuffer>, key: String, length: Int): FloatVector? {
+        return getValue(txn, key)?.getFloatVectorWithoutLength(0, length)
     }
 
     fun getKeyVector(txn: Txn<DirectBuffer>, key: String): KeyVector? {
         val vector = getFloatVector(txn, key) ?: return null
+
+        return KeyVector(key, vector)
+    }
+
+    fun getKeyVectorWithoutLength(txn: Txn<DirectBuffer>, key: String, length: Int): KeyVector? {
+        val vector = getFloatVectorWithoutLength(txn, key, length) ?: return null
 
         return KeyVector(key, vector)
     }
