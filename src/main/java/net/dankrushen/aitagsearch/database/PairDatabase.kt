@@ -8,28 +8,28 @@ import org.lmdbjava.Env
 import org.lmdbjava.Txn
 import java.io.Closeable
 
-open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closeable {
+open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var commitTxnByDef: Boolean = false) : Closeable {
     val db: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
 
-    fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer, commitTxn: Boolean = false) {
+    fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {
         db.put(txn, key, value)
 
         if (commitTxn)
             txn.commit()
     }
 
-    fun putRawPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<DirectBuffer, DirectBuffer>, commitTxn: Boolean = false) {
+    fun putRawPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<DirectBuffer, DirectBuffer>, commitTxn: Boolean = commitTxnByDef) {
         putRawPair(txn, keyValuePair.first, keyValuePair.second, commitTxn)
     }
 
-    fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = false) {
+    fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = commitTxnByDef) {
         val rawKey = keyConverter.toDirectBuffer(key)
         val rawValue = valueConverter.toDirectBuffer(value)
 
         putRawPair(txn, rawKey, rawValue, commitTxn)
     }
 
-    fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = false) {
+    fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = commitTxnByDef) {
         putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter, commitTxn)
     }
 

@@ -2,12 +2,10 @@ package net.dankrushen.aitagsearch.tests
 
 import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.conversion.StringConverter
-import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.database.DatabaseUtils
-import net.dankrushen.aitagsearch.database.StringVectorDatabase
 import net.dankrushen.aitagsearch.database.TypedPairDatabase
+import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
-import net.dankrushen.aitagsearch.extensions.toUnsafeBuffer
 import org.agrona.DirectBuffer
 import org.lmdbjava.Env
 import java.io.File

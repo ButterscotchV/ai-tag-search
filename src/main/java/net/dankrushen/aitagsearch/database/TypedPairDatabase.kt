@@ -5,13 +5,13 @@ import org.agrona.DirectBuffer
 import org.lmdbjava.Env
 import org.lmdbjava.Txn
 
-class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>): PairDatabase(env, dbName) {
+class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>, commitTxnByDef: Boolean = false) : PairDatabase(env, dbName, commitTxnByDef) {
 
-    fun putPair(txn: Txn<DirectBuffer>, key: K, value: V, commitTxn: Boolean = false) {
+    fun putPair(txn: Txn<DirectBuffer>, key: K, value: V, commitTxn: Boolean = commitTxnByDef) {
         putPair(txn, key, value, keyConverter, valueConverter, commitTxn)
     }
 
-    fun putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, commitTxn: Boolean = false) {
+    fun putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, commitTxn: Boolean = commitTxnByDef) {
         putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter, commitTxn)
     }
 

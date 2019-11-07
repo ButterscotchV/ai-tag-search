@@ -8,24 +8,6 @@ import java.io.File
 import java.nio.ByteBuffer
 
 object DatabaseUtils {
-    fun stringToUnsafeBuffer(string: String): UnsafeBuffer {
-        val stringBytes = string.toByteArray()
-
-        val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(Int.SIZE_BYTES + stringBytes.size))
-
-        byteBuffer.putInt(0, stringBytes.size)
-        byteBuffer.putBytes(Int.SIZE_BYTES, stringBytes)
-
-        return byteBuffer
-    }
-
-    fun stringToUnsafeBuffer(string: String, size: Int): UnsafeBuffer {
-        val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(size))
-
-        byteBuffer.putStringUtf8(0, string)
-
-        return byteBuffer
-    }
 
     fun createEnv(file: File, estimatedSizeBytes: Long, numDb: Int): Env<DirectBuffer> {
         return Env.create(DirectBufferProxy.PROXY_DB)
