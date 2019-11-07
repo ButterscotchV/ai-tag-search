@@ -73,6 +73,9 @@ abstract class DirectBufferConverter<T> {
         return Pair(value.first, bytesRead)
     }
 
-    open fun read(directBuffer: DirectBuffer, index: Int): T = readCount(directBuffer, index).first
+    open fun read(directBuffer: DirectBuffer, index: Int): T {
+        val length = directBuffer.getInt(index)
+        return readWithoutLength(directBuffer, index + Int.SIZE_BYTES, length)
+    }
     // endregion
 }

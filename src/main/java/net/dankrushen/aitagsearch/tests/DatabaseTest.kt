@@ -34,10 +34,10 @@ fun main() {
         val db = TypedPairDatabase(env, "Test", StringConverter.converter, FloatVectorConverter.converter)
 
         db.use {
-            testDatabase(env, db)
-            println()
-            // testWritingToDatabase(env, db, 1600000)
-            // println()
+            //testDatabase(env, db)
+            //println()
+            //testWritingToDatabase(env, db, 1600000)
+            //println()
             testNearestNeighbour(env, db, 150)
         }
     }
@@ -100,26 +100,23 @@ fun testWritingToDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, 
     }
 }
 
-fun testNearestNeighbour(env: Env<DirectBuffer>, db: TypedPairDatabase<String, FloatVector>, numNeighbours: Int, sampleCount: Int = 100) {
-    var sumTime = 0L
+fun testNearestNeighbour(env: Env<DirectBuffer>, db: TypedPairDatabase<String, FloatVector>, numNeighbours: Int, sampleCount: Int = 50) {
+    val times = LongArray(sampleCount)
 
     val testVector = FloatVector.ones(128)
-    for (i in 0 until sampleCount) {
-        val result = time("Fetching $numNeighbours nearest neighbours") {
-            val txn = env.txnRead()
+    val nearestNeighbour = NearestNeighbour(db, StringConverter.converter, CosineDistance.measurer)
 
-            val nearestNeighbour = NearestNeighbour(db, StringConverter.converter)
-            val neighbours = nearestNeighbour.getNeighbours(txn, testVector, numNeighbours, CosineDistance.measurer)
+    env.txnRead().use {
+        for (i in 0 until sampleCount) {
+            times[i] = time("Fetching $numNeighbours nearest neighbours") {
+                val neighbours = nearestNeighbour.getNeighbours(it, testVector, numNeighbours)
 
-            env.close()
-
-            for (keyVectorDist in neighbours) {
-                println(keyVectorDist)
-            }
+                for (keyVectorDist in neighbours) {
+                    println(keyVectorDist)
+                }
+            }.second
         }
-
-        sumTime += result.second
     }
 
-    println("Fetching $numNeighbours nearest neighbours took on average ${sumTime / sampleCount} ms over $sampleCount samples")
+    println("Fetching $numNeighbours nearest neighbours took on average ${times.average()} ms over $sampleCount samples with a min of ${times.min()} ms and max of ${times.max()} ms")
 }

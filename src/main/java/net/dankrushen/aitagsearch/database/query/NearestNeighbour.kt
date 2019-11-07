@@ -3,63 +3,66 @@ package net.dankrushen.aitagsearch.database.query
 import net.dankrushen.aitagsearch.comparison.DistanceMeasurer
 import net.dankrushen.aitagsearch.comparison.EuclidianDistance
 import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
+import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import org.agrona.DirectBuffer
+import org.agrona.MutableDirectBuffer
+import org.agrona.concurrent.UnsafeBuffer
 import org.lmdbjava.Txn
+import java.nio.ByteBuffer
 
-class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val keyConverter: DirectBufferConverter<K>) {
+class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val keyConverter: DirectBufferConverter<K>, var distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
 
-    internal fun convertRawKeyVectorDist(keyVectorDist: Pair<Pair<DirectBuffer, FloatVector>, Float>): Pair<Pair<K, FloatVector>, Float> {
-        val key = keyConverter.read(keyVectorDist.first.first, 0)
-        return Pair(Pair(key, keyVectorDist.first.second), keyVectorDist.second)
+    internal fun convertRawKeyVectorDist(rawKey: DirectBuffer, vector: FloatVector, dist: Float): Pair<Pair<K, FloatVector>, Float> {
+        val key = keyConverter.read(rawKey, 0)
+        return Pair(Pair(key, vector), dist)
     }
 
-    internal fun addIfSmaller(keyVectorDists: MutableList<Pair<Pair<K, FloatVector>, Float>>, keyVectorDist: Pair<Pair<DirectBuffer, FloatVector>, Float>): Float {
+    internal fun addIfSmaller(keyVectorDists: Array<Pair<Pair<K, FloatVector>, Float>?>, rawKey: DirectBuffer, vector: FloatVector, dist: Float): Float? {
         var maxKeyVectorIndex = 0
 
         for (i in 1 until keyVectorDists.size) {
-            if (keyVectorDists[maxKeyVectorIndex].second < keyVectorDists[i].second) {
+            val maxKeyVector = keyVectorDists[maxKeyVectorIndex] ?: break
+            val curKeyVector = keyVectorDists[i]
+
+            if (curKeyVector == null || maxKeyVector.second < curKeyVector.second) {
                 maxKeyVectorIndex = i
             }
         }
 
-        val maxTupleDist = keyVectorDists[maxKeyVectorIndex].second
+        val maxKeyVector = keyVectorDists[maxKeyVectorIndex]
 
-        if (keyVectorDist.second < maxTupleDist) {
-            keyVectorDists[maxKeyVectorIndex] = convertRawKeyVectorDist(keyVectorDist)
+        if (maxKeyVector == null || dist < maxKeyVector.second) {
+            keyVectorDists[maxKeyVectorIndex] = convertRawKeyVectorDist(rawKey, vector, dist)
         }
 
-        return maxTupleDist
+        return maxKeyVector?.second
     }
 
-    fun getNeighbours(txn: Txn<DirectBuffer>, vector: FloatVector, numNeighbours: Int, distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer): Array<Pair<Pair<K, FloatVector>, Float>> {
-        require(numNeighbours > 0) { "numNeighbours must be a value greater than 0" }
+    fun getNeighbours(txn: Txn<DirectBuffer>, vector: FloatVector, numNeighbours: Int): Array<Pair<Pair<K, FloatVector>, Float>?> {
+        require(numNeighbours > 0) { "\"numNeighbours\" must be a value greater than 0" }
 
-        val vectorDiffsList = mutableListOf<Pair<Pair<K, FloatVector>, Float>>()
+        val vectorDiffsList = arrayOfNulls<Pair<Pair<K, FloatVector>, Float>>(numNeighbours)
 
-        var maxDist: Float = -1f
+        var maxDist: Float? = null
 
         db.dbi.iterate(txn).use {
             for (keyVal in it) {
-                val entryVector = keyVal.`val`().getFloatVector(0)
+                val localMaxDist = maxDist
+
+                val entryVector = FloatVectorConverter.converter.read(keyVal.`val`(), 0)
                 val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
-                if (maxDist < 0 || dist < maxDist) {
-                    val keyVector = Pair(Pair(keyVal.key(), entryVector), dist)
-
-                    if (vectorDiffsList.size < numNeighbours) {
-                        vectorDiffsList.add(convertRawKeyVectorDist(keyVector))
-                    } else {
-                        maxDist = addIfSmaller(vectorDiffsList, keyVector)
-                    }
+                if (localMaxDist == null || dist < localMaxDist) {
+                    maxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist)
                 }
             }
         }
 
-        vectorDiffsList.sortBy { keyVectorDist -> keyVectorDist.second }
+        vectorDiffsList.sortBy { keyVectorDist -> keyVectorDist?.second }
 
-        return vectorDiffsList.toTypedArray()
+        return vectorDiffsList
     }
 }
