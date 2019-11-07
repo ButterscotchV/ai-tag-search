@@ -32,7 +32,6 @@ fun testDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, FloatVect
     println("Original: ")
     println("\tKey: ${demoKeyVector.first}")
     println("\tVector: ${demoKeyVector.second}")
-    println("\tEncoded Key: ${demoKeyVector.first.toUnsafeBuffer(env.maxKeySize).getStringUtf8(0)}")
     println("\tEncoded Vector: ${demoKeyVector.second.toUnsafeBuffer().getFloatVector(0)}")
 
     var testKeyVectorResult: Pair<String, FloatVector>? = null
