@@ -46,6 +46,17 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
     val dimension: Int
         get() = dims.size
 
+    val sum: Float
+        get() {
+            var sum = 0f
+
+            for (dimVal in dims) {
+                sum += dimVal
+            }
+
+            return sum
+        }
+
     val sqrMagnitude: Float
         get() {
             var sqrMagnitude = 0f

@@ -2,12 +2,12 @@ package net.dankrushen.aitagsearch.comparison
 
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 
-class LinearDistance : DistanceComparer {
+class SqrEuclidianDistance : DistanceMeasurer {
     companion object {
-        val comparer = LinearDistance()
+        val measurer = SqrEuclidianDistance()
     }
 
     override fun calcDistance(firstVector: FloatVector, secondVector: FloatVector): Float {
-        return firstVector.distanceTo(secondVector)
+        return (secondVector - firstVector).sqrMagnitude
     }
 }

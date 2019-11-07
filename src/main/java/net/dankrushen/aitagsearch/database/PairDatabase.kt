@@ -2,17 +2,34 @@ package net.dankrushen.aitagsearch.database
 
 import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import org.agrona.DirectBuffer
+import org.agrona.concurrent.UnsafeBuffer
 import org.lmdbjava.Dbi
 import org.lmdbjava.DbiFlags
 import org.lmdbjava.Env
 import org.lmdbjava.Txn
 import java.io.Closeable
+import java.nio.ByteBuffer
 
 open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var commitTxnByDef: Boolean = false) : Closeable {
-    val db: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
+    val dbi: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
+
+    val syncKeyByteBuffer = ByteBuffer.allocateDirect(env.maxKeySize)
+    val syncKeyDirectBuffer = UnsafeBuffer(syncKeyByteBuffer)
+
+    fun <K> keyToDirectBuffer(key: K, keyConverter: DirectBufferConverter<K>): DirectBuffer {
+        syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, env.maxKeySize)
+        val bytesWritten = keyConverter.write(syncKeyDirectBuffer, 0, key)
+        syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, bytesWritten)
+
+        return syncKeyDirectBuffer
+    }
+
+    fun <V> valueToDirectBuffer(value: V, valueConverter: DirectBufferConverter<V>): DirectBuffer {
+        return valueConverter.toDirectBuffer(value)
+    }
 
     fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {
-        db.put(txn, key, value)
+        dbi.put(txn, key, value)
 
         if (commitTxn)
             txn.commit()
@@ -23,8 +40,8 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
     }
 
     fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = commitTxnByDef) {
-        val rawKey = keyConverter.toDirectBuffer(key)
-        val rawValue = valueConverter.toDirectBuffer(value)
+        val rawKey = keyToDirectBuffer(key, keyConverter)
+        val rawValue = valueToDirectBuffer(value, valueConverter)
 
         putRawPair(txn, rawKey, rawValue, commitTxn)
     }
@@ -34,11 +51,11 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
     }
 
     fun getRawValue(txn: Txn<DirectBuffer>, key: DirectBuffer): DirectBuffer? {
-        return db.get(txn, key)
+        return dbi.get(txn, key)
     }
 
     fun <K, V> getValue(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): V? {
-        val rawKey = keyConverter.toDirectBuffer(key)
+        val rawKey = keyToDirectBuffer(key, keyConverter)
         val rawValue = getRawValue(txn, rawKey) ?: return null
 
         return valueConverter.read(rawValue, 0)
@@ -57,6 +74,6 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
     }
 
     override fun close() {
-        db.close()
+        dbi.close()
     }
 }
