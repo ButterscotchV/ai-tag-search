@@ -5,7 +5,7 @@ import org.agrona.MutableDirectBuffer
 
 class IntConverter : DirectBufferConverter<Int>() {
     companion object {
-        val converter: IntConverter = IntConverter()
+        val converter = IntConverter()
     }
 
     override fun getLength(value: Int): Int = 1

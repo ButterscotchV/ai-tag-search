@@ -5,7 +5,7 @@ import org.agrona.MutableDirectBuffer
 
 class StringConverter : DirectBufferConverter<String>() {
     companion object {
-        val converter: StringConverter = StringConverter()
+        val converter = StringConverter()
     }
 
     private fun getStringBytes(value: String): ByteArray = value.toByteArray(Charsets.UTF_8)

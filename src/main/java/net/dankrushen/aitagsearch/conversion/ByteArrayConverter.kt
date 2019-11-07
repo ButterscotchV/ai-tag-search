@@ -6,7 +6,7 @@ import org.agrona.concurrent.UnsafeBuffer
 
 class ByteArrayConverter : DirectBufferConverter<ByteArray>() {
     companion object {
-        val converter: ByteArrayConverter = ByteArrayConverter()
+        val converter = ByteArrayConverter()
     }
 
     override fun getLength(value: ByteArray): Int = value.size

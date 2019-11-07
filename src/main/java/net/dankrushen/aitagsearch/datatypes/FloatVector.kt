@@ -1,11 +1,5 @@
 package net.dankrushen.aitagsearch.datatypes
 
-import net.dankrushen.aitagsearch.extensions.getFloatVector
-import net.dankrushen.aitagsearch.extensions.getFloatVectorWithoutLength
-import net.dankrushen.aitagsearch.extensions.putFloatVector
-import net.dankrushen.aitagsearch.extensions.putFloatVectorWithoutLength
-import org.agrona.concurrent.UnsafeBuffer
-import java.nio.ByteBuffer
 import kotlin.math.sqrt
 
 data class FloatVector(val dims: FloatArray) : Cloneable {
@@ -26,38 +20,6 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
 
         fun zeros(dimension: Int): FloatVector = FloatVector(FloatArray(dimension))
         fun ones(dimension: Int): FloatVector = valueFloatVector(1f, dimension)
-
-        fun toUnsafeBuffer(vector: FloatVector): UnsafeBuffer {
-            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytes + Int.SIZE_BYTES))
-
-            byteBuffer.putFloatVector(0, vector)
-
-            return byteBuffer
-        }
-
-        fun toUnsafeBufferWithoutLength(vector: FloatVector): UnsafeBuffer {
-            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytes))
-
-            byteBuffer.putFloatVectorWithoutLength(0, vector)
-
-            return byteBuffer
-        }
-
-        fun toByteArrayWithoutLength(vector: FloatVector): ByteArray {
-            return toUnsafeBufferWithoutLength(vector).byteArray()
-        }
-
-        fun toByteArray(vector: FloatVector): ByteArray {
-            return toUnsafeBuffer(vector).byteArray()
-        }
-
-        fun fromByteArray(byteArray: ByteArray): FloatVector {
-            return UnsafeBuffer(byteArray).getFloatVector(0)
-        }
-
-        fun fromByteArrayWithoutLength(byteArray: ByteArray, length: Int): FloatVector {
-            return UnsafeBuffer(byteArray).getFloatVectorWithoutLength(0, length)
-        }
 
         fun toString(vector: FloatVector): String {
             return vector.dims.joinToString(" ")
@@ -116,10 +78,6 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
         return dims.contentHashCode()
     }
 
-    fun toUnsafeBuffer(): UnsafeBuffer = toUnsafeBuffer(this)
-    fun toUnsafeBufferWithoutLength(): UnsafeBuffer = toUnsafeBufferWithoutLength(this)
-    fun toByteArray(): ByteArray = toByteArray(this)
-    fun toByteArrayWithoutLength(): ByteArray = toByteArrayWithoutLength(this)
     override fun toString(): String = toString(this)
 
     operator fun get(dimension: Int) = dims[dimension]
@@ -129,7 +87,7 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
 
     override fun clone(): FloatVector = FloatVector(dims.clone())
 
-    private fun checkDimension(vector: FloatVector) {
+    fun checkDimension(vector: FloatVector) {
         require(dimension == vector.dimension) { "\"vector\" must be of the same dimension as the vector being operated on" }
     }
 

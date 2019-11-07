@@ -8,7 +8,7 @@ import org.agrona.MutableDirectBuffer
 
 class FloatVectorConverter : DirectBufferConverter<FloatVector>() {
     companion object {
-        val converter: FloatVectorConverter = FloatVectorConverter()
+        val converter = FloatVectorConverter()
     }
 
     override fun getLength(value: FloatVector): Int {
