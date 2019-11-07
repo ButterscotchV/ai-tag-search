@@ -6,12 +6,8 @@ import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import net.dankrushen.aitagsearch.datatypes.FloatVector
-import net.dankrushen.aitagsearch.extensions.getFloatVector
 import org.agrona.DirectBuffer
-import org.agrona.MutableDirectBuffer
-import org.agrona.concurrent.UnsafeBuffer
 import org.lmdbjava.Txn
-import java.nio.ByteBuffer
 
 class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val keyConverter: DirectBufferConverter<K>, var distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
 

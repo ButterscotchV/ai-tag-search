@@ -11,7 +11,7 @@ abstract class DirectBufferConverter<T> {
 
     open fun getSize(value: T): Int = getLength(value)
 
-    open fun getLengthWithCount(value: T): Int = getLength(value) + Int.SIZE_BYTES
+    open fun getSizeWithCount(value: T): Int = getSize(value) + Int.SIZE_BYTES
 
     // region Write
     abstract fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: T): Int

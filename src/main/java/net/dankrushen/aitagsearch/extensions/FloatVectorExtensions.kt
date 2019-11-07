@@ -14,11 +14,11 @@ fun MutableDirectBuffer.putFloatVector(index: Int, value: FloatVector): Int {
 }
 
 fun DirectBuffer.getFloatVectorWithoutLengthCount(index: Int, length: Int): Pair<FloatVector, Int> {
-    return FloatVectorConverter.converter.readWithoutLengthCount(this, index , length)
+    return FloatVectorConverter.converter.readWithoutLengthCount(this, index, length)
 }
 
 fun DirectBuffer.getFloatVectorWithoutLength(index: Int, length: Int): FloatVector {
-    return FloatVectorConverter.converter.readWithoutLength(this, index , length)
+    return FloatVectorConverter.converter.readWithoutLength(this, index, length)
 }
 
 fun DirectBuffer.getFloatVectorCount(index: Int): Pair<FloatVector, Int> {

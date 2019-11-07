@@ -8,9 +8,9 @@ class StringConverter : DirectBufferConverter<String>() {
         val converter = StringConverter()
     }
 
-    private fun getStringBytes(value: String): ByteArray = value.toByteArray(Charsets.UTF_8)
+    internal fun getStringBytes(value: String): ByteArray = value.toByteArray(Charsets.UTF_8)
 
-    private fun bytesToString(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
+    internal fun bytesToString(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
 
     override fun getLength(value: String): Int = value.length
 
