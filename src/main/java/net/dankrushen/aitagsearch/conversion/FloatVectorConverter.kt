@@ -12,6 +12,10 @@ class FloatVectorConverter : DirectBufferConverter<FloatVector>() {
     }
 
     override fun getLength(value: FloatVector): Int {
+        return value.dimension
+    }
+
+    override fun getSize(value: FloatVector): Int {
         return value.sizeBytes
     }
 

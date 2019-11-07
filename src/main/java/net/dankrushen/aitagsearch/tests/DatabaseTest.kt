@@ -1,8 +1,11 @@
 package net.dankrushen.aitagsearch.tests
 
+import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
+import net.dankrushen.aitagsearch.conversion.StringConverter
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.database.DatabaseUtils
 import net.dankrushen.aitagsearch.database.StringVectorDatabase
+import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import net.dankrushen.aitagsearch.extensions.toUnsafeBuffer
 import org.agrona.DirectBuffer
@@ -13,7 +16,7 @@ fun main() {
     val env = DatabaseUtils.createEnv(File("C:\\Users\\Dankrushen\\Desktop\\NewDatabase"), 1073741824, 1)
 
     env.use {
-        val db = StringVectorDatabase(env, "Test")
+        val db = TypedPairDatabase(env, "Test", StringConverter.converter, FloatVectorConverter.converter)
 
         db.use {
             testDatabase(env, db)
@@ -21,7 +24,7 @@ fun main() {
     }
 }
 
-fun testDatabase(env: Env<DirectBuffer>, db: StringVectorDatabase) {
+fun testDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, FloatVector>) {
     val demoKeyVector = Pair("test", FloatVector.zeros(128))
 
     for (i in 0 until demoKeyVector.second.dimension) {
@@ -37,11 +40,11 @@ fun testDatabase(env: Env<DirectBuffer>, db: StringVectorDatabase) {
     var testKeyVectorResult: Pair<String, FloatVector>? = null
 
     env.txnWrite().use {
-        db.putKeyVector(it, demoKeyVector, commitTxn = true)
+        db.putPair(it, demoKeyVector, commitTxn = true)
     }
 
     env.txnRead().use {
-        testKeyVectorResult = db.getKeyVector(it, demoKeyVector.first)
+        testKeyVectorResult = db.getPair(it, demoKeyVector.first)
     }
 
     if (testKeyVectorResult == null)

@@ -8,7 +8,9 @@ class IntConverter : DirectBufferConverter<Int>() {
         val converter: IntConverter = IntConverter()
     }
 
-    override fun getLength(value: Int): Int = Int.SIZE_BYTES
+    override fun getLength(value: Int): Int = 1
+
+    override fun getSize(value: Int): Int = Int.SIZE_BYTES
 
     override fun getLengthWithCount(value: Int): Int = Int.SIZE_BYTES
 

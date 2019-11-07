@@ -8,17 +8,13 @@ class StringConverter : DirectBufferConverter<String>() {
         val converter: StringConverter = StringConverter()
     }
 
-    private fun getStringBytes(value: String): ByteArray {
-        return value.toByteArray(Charsets.UTF_8)
-    }
+    private fun getStringBytes(value: String): ByteArray = value.toByteArray(Charsets.UTF_8)
 
-    private fun bytesToString(bytes: ByteArray): String {
-        return bytes.toString(Charsets.UTF_8)
-    }
+    private fun bytesToString(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
 
-    override fun getLength(value: String): Int {
-        return getStringBytes(value).size
-    }
+    override fun getLength(value: String): Int = value.length
+
+    override fun getSize(value: String): Int = getStringBytes(value).size
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: String): Int {
         return ByteArrayConverter.converter.writeWithoutLength(directBuffer, index, getStringBytes(value))
@@ -32,16 +28,16 @@ class StringConverter : DirectBufferConverter<String>() {
         return ByteArrayConverter.converter.write(directBuffer, index, getStringBytes(value))
     }
 
-    override fun toDirectBuffer(value: String, length: Int): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), length)
+    override fun toDirectBuffer(value: String, size: Int, length: Int): DirectBuffer {
+        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), size, length)
     }
 
     override fun toDirectBuffer(value: String): DirectBuffer {
         return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value))
     }
 
-    override fun toDirectBufferWithoutLength(value: String, length: Int): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), length)
+    override fun toDirectBufferWithoutLength(value: String, size: Int): DirectBuffer {
+        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), size)
     }
 
     override fun toDirectBufferWithoutLength(value: String): DirectBuffer {
