@@ -5,29 +5,21 @@ import org.agrona.DirectBuffer
 import org.lmdbjava.Env
 import org.lmdbjava.Txn
 
-class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val converters: Pair<DirectBufferConverter<K>, DirectBufferConverter<V>>): PairDatabase(env, dbName) {
-
-    fun putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, commitTxn: Boolean = false) {
-        putPair(txn, keyValuePair.first, keyValuePair.second, converters, commitTxn)
-    }
+class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>): PairDatabase(env, dbName) {
 
     fun putPair(txn: Txn<DirectBuffer>, key: K, value: V, commitTxn: Boolean = false) {
-        val rawKey = converters.first.toDirectBuffer(key)
-        val rawValue = converters.second.toDirectBuffer(value)
+        putPair(txn, key, value, keyConverter, valueConverter, commitTxn)
+    }
 
-        putRawPair(txn, rawKey, rawValue, commitTxn)
+    fun putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, commitTxn: Boolean = false) {
+        putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter, commitTxn)
     }
 
     fun getValue(txn: Txn<DirectBuffer>, key: K): V? {
-        val rawKey = converters.first.toDirectBuffer(key)
-        val rawValue = getRawValue(txn, rawKey) ?: return null
-
-        return converters.second.read(rawValue, 0)
+        return getValue(txn, key, keyConverter, valueConverter)
     }
 
     fun getPair(txn: Txn<DirectBuffer>, key: K): Pair<K, V>? {
-        val value = getValue(txn, key, converters) ?: return null
-
-        return Pair(key, value)
+        return getPair(txn, key, keyConverter, valueConverter)
     }
 }

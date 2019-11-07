@@ -22,26 +22,26 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closea
         putRawPair(txn, keyValuePair.first, keyValuePair.second, commitTxn)
     }
 
-    fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, converters: Pair<DirectBufferConverter<K>, DirectBufferConverter<V>>, commitTxn: Boolean = false) {
-        putPair(txn, keyValuePair.first, keyValuePair.second, converters, commitTxn)
-    }
-
-    fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, converters: Pair<DirectBufferConverter<K>, DirectBufferConverter<V>>, commitTxn: Boolean = false) {
-        val rawKey = converters.first.toDirectBuffer(key)
-        val rawValue = converters.second.toDirectBuffer(value)
+    fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = false) {
+        val rawKey = keyConverter.toDirectBuffer(key)
+        val rawValue = valueConverter.toDirectBuffer(value)
 
         putRawPair(txn, rawKey, rawValue, commitTxn)
+    }
+
+    fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = false) {
+        putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter, commitTxn)
     }
 
     fun getRawValue(txn: Txn<DirectBuffer>, key: DirectBuffer): DirectBuffer? {
         return db.get(txn, key)
     }
 
-    fun <K, V> getValue(txn: Txn<DirectBuffer>, key: K, converters: Pair<DirectBufferConverter<K>, DirectBufferConverter<V>>): V? {
-        val rawKey = converters.first.toDirectBuffer(key)
+    fun <K, V> getValue(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): V? {
+        val rawKey = keyConverter.toDirectBuffer(key)
         val rawValue = getRawValue(txn, rawKey) ?: return null
 
-        return converters.second.read(rawValue, 0)
+        return valueConverter.read(rawValue, 0)
     }
 
     fun getRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer): Pair<DirectBuffer, DirectBuffer>? {
@@ -50,8 +50,8 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closea
         return Pair(key, rawValue)
     }
 
-    fun <K, V> getPair(txn: Txn<DirectBuffer>, key: K, converters: Pair<DirectBufferConverter<K>, DirectBufferConverter<V>>): Pair<K, V>? {
-        val value = getValue(txn, key, converters) ?: return null
+    fun <K, V> getPair(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): Pair<K, V>? {
+        val value = getValue(txn, key, keyConverter, valueConverter) ?: return null
 
         return Pair(key, value)
     }
