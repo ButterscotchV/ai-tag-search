@@ -1,7 +1,6 @@
 package net.dankrushen.aitagsearch.database
 
 import net.dankrushen.aitagsearch.datatypes.FloatVector
-import net.dankrushen.aitagsearch.datatypes.KeyVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVectorWithoutLength
 import net.dankrushen.aitagsearch.extensions.toUnsafeBuffer
@@ -12,11 +11,11 @@ import org.lmdbjava.Env
 import org.lmdbjava.Txn
 import java.io.Closeable
 
-class KeyVectorDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closeable {
+class StringVectorDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closeable {
     val db: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
 
-    fun putKeyVector(txn: Txn<DirectBuffer>, keyVector: KeyVector, commitTxn: Boolean = false) {
-        db.put(txn, keyVector.key.toUnsafeBuffer(env.maxKeySize), keyVector.vector.toUnsafeBuffer())
+    fun putKeyVector(txn: Txn<DirectBuffer>, keyVector: Pair<String, FloatVector>, commitTxn: Boolean = false) {
+        db.put(txn, keyVector.first.toUnsafeBuffer(env.maxKeySize), keyVector.second.toUnsafeBuffer())
 
         if (commitTxn)
             txn.commit()
@@ -34,16 +33,16 @@ class KeyVectorDatabase(val env: Env<DirectBuffer>, val dbName: String) : Closea
         return getValue(txn, key)?.getFloatVectorWithoutLength(0, length)
     }
 
-    fun getKeyVector(txn: Txn<DirectBuffer>, key: String): KeyVector? {
+    fun getKeyVector(txn: Txn<DirectBuffer>, key: String): Pair<String, FloatVector>? {
         val vector = getFloatVector(txn, key) ?: return null
 
-        return KeyVector(key, vector)
+        return Pair(key, vector)
     }
 
-    fun getKeyVectorWithoutLength(txn: Txn<DirectBuffer>, key: String, length: Int): KeyVector? {
+    fun getKeyVectorWithoutLength(txn: Txn<DirectBuffer>, key: String, length: Int): Pair<String, FloatVector>? {
         val vector = getFloatVectorWithoutLength(txn, key, length) ?: return null
 
-        return KeyVector(key, vector)
+        return Pair(key, vector)
     }
 
     override fun close() {

@@ -28,7 +28,7 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
         fun ones(dimension: Int): FloatVector = valueFloatVector(1f, dimension)
 
         fun toUnsafeBuffer(vector: FloatVector): UnsafeBuffer {
-            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytes))
+            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytes + Int.SIZE_BYTES))
 
             byteBuffer.putFloatVector(0, vector)
 
@@ -36,7 +36,7 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
         }
 
         fun toUnsafeBufferWithoutLength(vector: FloatVector): UnsafeBuffer {
-            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytesWithoutLength))
+            val byteBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(vector.sizeBytes))
 
             byteBuffer.putFloatVectorWithoutLength(0, vector)
 
@@ -78,11 +78,7 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
 
     constructor(dimension: Int) : this(FloatArray(dimension))
 
-    // One int for the dimension and one int of bytes per dimension
     val sizeBytes: Int
-        get() = Int.SIZE_BYTES + (dimension * Int.SIZE_BYTES)
-
-    val sizeBytesWithoutLength: Int
         get() = dimension * Int.SIZE_BYTES
 
     val dimension: Int

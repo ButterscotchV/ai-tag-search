@@ -28,7 +28,7 @@ fun MutableDirectBuffer.putFloatVector(index: Int, value: FloatVector): Int {
     return bytesWritten
 }
 
-fun DirectBuffer.getFloatVectorWithoutLength(index: Int, length: Int): FloatVector {
+fun DirectBuffer.getFloatVectorWithoutLengthCount(index: Int, length: Int): Pair<FloatVector, Int> {
     var bytesRead = 0
 
     val floatVector = FloatVector(length)
@@ -40,14 +40,21 @@ fun DirectBuffer.getFloatVectorWithoutLength(index: Int, length: Int): FloatVect
         bytesRead += Int.SIZE_BYTES
     }
 
-    return floatVector
+    return Pair(floatVector, bytesRead)
 }
 
-fun DirectBuffer.getFloatVector(index: Int): FloatVector {
+fun DirectBuffer.getFloatVectorWithoutLength(index: Int, length: Int): FloatVector = getFloatVectorWithoutLengthCount(index, length).first
+
+fun DirectBuffer.getFloatVectorCount(index: Int): Pair<FloatVector, Int> {
     var bytesRead = 0
 
     val dimension = this.getInt(index)
     bytesRead += Int.SIZE_BYTES
 
-    return getFloatVectorWithoutLength(index + bytesRead, dimension)
+    val value = getFloatVectorWithoutLengthCount(index + bytesRead, dimension)
+    bytesRead += value.second
+
+    return Pair(value.first, bytesRead)
 }
+
+fun DirectBuffer.getFloatVector(index: Int): FloatVector = getFloatVectorCount(index).first
