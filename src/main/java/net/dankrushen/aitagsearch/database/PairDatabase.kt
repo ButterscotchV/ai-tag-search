@@ -1,6 +1,7 @@
 package net.dankrushen.aitagsearch.database
 
 import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
+import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseIterator
 import org.agrona.DirectBuffer
 import org.agrona.concurrent.UnsafeBuffer
 import org.lmdbjava.Dbi
@@ -11,6 +12,7 @@ import java.io.Closeable
 import java.nio.ByteBuffer
 
 open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var commitTxnByDef: Boolean = false) : Closeable {
+
     val dbi: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
 
     val syncKeyByteBuffer = ByteBuffer.allocateDirect(env.maxKeySize)
@@ -26,6 +28,10 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
 
     fun <V> valueToDirectBuffer(value: V, valueConverter: DirectBufferConverter<V>): DirectBuffer {
         return valueConverter.toDirectBuffer(value)
+    }
+
+    fun <K, V> iterate(txn: Txn<DirectBuffer>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): TypedPairDatabaseIterator<K, V> {
+        return TypedPairDatabaseIterator(this, txn, keyConverter, valueConverter)
     }
 
     fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {

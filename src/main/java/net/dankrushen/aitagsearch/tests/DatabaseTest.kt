@@ -108,7 +108,7 @@ fun testNearestNeighbour(env: Env<DirectBuffer>, db: TypedPairDatabase<String, F
 
     env.txnRead().use {
         for (i in 0 until sampleCount) {
-            times[i] = time("Fetching $numNeighbours nearest neighbours") {
+            times[i] = time("Fetching $numNeighbours nearest neighbour(s)") {
                 val neighbours = nearestNeighbour.getNeighbours(it, testVector, numNeighbours)
 
                 for (keyVectorDist in neighbours) {
