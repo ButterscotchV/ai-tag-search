@@ -12,7 +12,7 @@ class IntConverter : DirectBufferConverter<Int>() {
 
     override fun getSize(value: Int): Int = Int.SIZE_BYTES
 
-    override fun getLengthWithCount(value: Int): Int = Int.SIZE_BYTES
+    override fun getSizeWithCount(value: Int): Int = Int.SIZE_BYTES
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: Int): Int {
         directBuffer.putInt(index, value)
