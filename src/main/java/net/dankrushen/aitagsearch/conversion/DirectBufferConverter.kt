@@ -32,8 +32,8 @@ abstract class DirectBufferConverter<T> {
     }
     // endregion
 
-    open fun toDirectBuffer(value: T, size: Int, length: Int): DirectBuffer {
-        val buffer = UnsafeBuffer(ByteBuffer.allocateDirect(size + Int.SIZE_BYTES))
+    open fun toDirectBuffer(value: T, sizeBytes: Int, length: Int): DirectBuffer {
+        val buffer = UnsafeBuffer(ByteBuffer.allocateDirect(sizeBytes + Int.SIZE_BYTES))
 
         write(buffer, 0, value, length)
 
@@ -44,8 +44,8 @@ abstract class DirectBufferConverter<T> {
         return toDirectBuffer(value, getSize(value), getLength(value))
     }
 
-    open fun toDirectBufferWithoutLength(value: T, size: Int): DirectBuffer {
-        val buffer = UnsafeBuffer(ByteBuffer.allocateDirect(size))
+    open fun toDirectBufferWithoutLength(value: T, sizeBytes: Int): DirectBuffer {
+        val buffer = UnsafeBuffer(ByteBuffer.allocateDirect(sizeBytes))
 
         writeWithoutLength(buffer, 0, value)
 

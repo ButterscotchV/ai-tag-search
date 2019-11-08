@@ -28,16 +28,16 @@ class StringConverter : DirectBufferConverter<String>() {
         return ByteArrayConverter.converter.write(directBuffer, index, getStringBytes(value))
     }
 
-    override fun toDirectBuffer(value: String, size: Int, length: Int): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), size, length)
+    override fun toDirectBuffer(value: String, sizeBytes: Int, length: Int): DirectBuffer {
+        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), sizeBytes, length)
     }
 
     override fun toDirectBuffer(value: String): DirectBuffer {
         return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value))
     }
 
-    override fun toDirectBufferWithoutLength(value: String, size: Int): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), size)
+    override fun toDirectBufferWithoutLength(value: String, sizeBytes: Int): DirectBuffer {
+        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), sizeBytes)
     }
 
     override fun toDirectBufferWithoutLength(value: String): DirectBuffer {
