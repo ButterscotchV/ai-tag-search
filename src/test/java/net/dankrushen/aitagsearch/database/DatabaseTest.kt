@@ -1,10 +1,8 @@
-package net.dankrushen.aitagsearch.tests
+package net.dankrushen.aitagsearch.database
 
 import net.dankrushen.aitagsearch.comparison.CosineDistance
 import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.conversion.StringConverter
-import net.dankrushen.aitagsearch.database.DatabaseUtils
-import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import net.dankrushen.aitagsearch.database.query.NearestNeighbour
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
@@ -12,7 +10,7 @@ import org.agrona.DirectBuffer
 import org.lmdbjava.Env
 import java.io.File
 
-private fun <T> time(action: String, block: () -> T): Pair<T, Long> {
+fun <T> time(action: String, block: () -> T): Pair<T, Long> {
     println("$action...")
 
     val start = System.currentTimeMillis()
@@ -97,6 +95,9 @@ fun testWritingToDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, 
                 txn = env.txnWrite()
             }
         }
+
+        txn.commit()
+        txn.close()
     }
 }
 
