@@ -1,6 +1,6 @@
 package net.dankrushen.aitagsearch.conversion.listconversion
 
-class FloatListToArrayConverter: ListToArrayConverter<Float> {
+class FloatListToArrayConverter : ListToArrayConverter<Float> {
     companion object {
         val converter = FloatListToArrayConverter()
     }

@@ -1,6 +1,6 @@
 package net.dankrushen.aitagsearch.conversion.listconversion
 
-class StringListToArrayConverter: ListToArrayConverter<String> {
+class StringListToArrayConverter : ListToArrayConverter<String> {
     companion object {
         val converter = StringListToArrayConverter()
     }
