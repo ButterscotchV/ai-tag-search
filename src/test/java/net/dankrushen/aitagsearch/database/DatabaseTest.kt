@@ -105,7 +105,7 @@ fun testNearestNeighbour(env: Env<DirectBuffer>, db: TypedPairDatabase<String, F
     val times = LongArray(sampleCount)
 
     val testVector = FloatVector.ones(128)
-    val nearestNeighbour = NearestNeighbour(db, StringConverter.converter, CosineDistance.measurer)
+    val nearestNeighbour = NearestNeighbour(db, CosineDistance.measurer)
 
     env.txnRead().use {
         for (i in 0 until sampleCount) {

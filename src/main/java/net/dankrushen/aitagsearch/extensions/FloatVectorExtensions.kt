@@ -28,3 +28,35 @@ fun DirectBuffer.getFloatVectorCount(index: Int): Pair<FloatVector, Int> {
 fun DirectBuffer.getFloatVector(index: Int): FloatVector {
     return FloatVectorConverter.converter.read(this, index)
 }
+
+fun Iterable<FloatVector>.sum(): FloatVector? {
+    var sumVector: FloatVector? = null
+
+    for (vector in this) {
+        if (sumVector == null)
+            sumVector = vector
+
+        sumVector = sumVector + vector
+    }
+
+    return sumVector
+}
+
+fun Iterable<FloatVector>.average(): FloatVector? {
+    var count = 0
+    var sumVector: FloatVector? = null
+
+    for (vector in this) {
+        sumVector = if (sumVector == null)
+            vector
+        else
+            sumVector + vector
+
+        count++
+    }
+
+    if (sumVector == null)
+        return null
+
+    return sumVector / count
+}

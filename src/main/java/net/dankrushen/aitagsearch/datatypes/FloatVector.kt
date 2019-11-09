@@ -4,17 +4,17 @@ import kotlin.math.sqrt
 
 data class FloatVector(val dims: FloatArray) : Cloneable {
     companion object {
-        fun valueFloatArray(value: Float, count: Int): FloatArray {
+        fun valueFloatArray(value: Number, count: Int): FloatArray {
             val vals = FloatArray(count)
 
             for (i in 0 until count) {
-                vals[i] = value
+                vals[i] = value.toFloat()
             }
 
             return vals
         }
 
-        fun valueFloatVector(value: Float, dimension: Int): FloatVector {
+        fun valueFloatVector(value: Number, dimension: Int): FloatVector {
             return FloatVector(valueFloatArray(value, dimension))
         }
 
@@ -154,33 +154,33 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
         }
     }
 
-    operator fun times(value: Float): FloatVector {
+    operator fun times(value: Number): FloatVector {
         val newVector = FloatVector(dimension)
         for (i in 0 until dimension) {
-            newVector[i] = this[i] * value
+            newVector[i] = this[i] * value.toFloat()
         }
 
         return newVector
     }
 
-    operator fun div(value: Float): FloatVector {
+    operator fun div(value: Number): FloatVector {
         val newVector = FloatVector(dimension)
         for (i in 0 until dimension) {
-            newVector[i] = this[i] / value
+            newVector[i] = this[i] / value.toFloat()
         }
 
         return newVector
     }
 
-    operator fun timesAssign(value: Float) {
+    operator fun timesAssign(value: Number) {
         for (i in 0 until dimension) {
-            this[i] *= value
+            this[i] *= value.toFloat()
         }
     }
 
-    operator fun divAssign(value: Float) {
+    operator fun divAssign(value: Number) {
         for (i in 0 until dimension) {
-            this[i] /= value
+            this[i] /= value.toFloat()
         }
     }
 }

@@ -9,10 +9,10 @@ import net.dankrushen.aitagsearch.datatypes.FloatVector
 import org.agrona.DirectBuffer
 import org.lmdbjava.Txn
 
-class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val keyConverter: DirectBufferConverter<K>, var distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
+class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
 
     internal fun convertRawKeyVectorDist(rawKey: DirectBuffer, vector: FloatVector, dist: Float): Pair<Pair<K, FloatVector>, Float> {
-        val key = keyConverter.read(rawKey, 0)
+        val key = db.keyConverter.read(rawKey, 0)
         return Pair(Pair(key, vector), dist)
     }
 
