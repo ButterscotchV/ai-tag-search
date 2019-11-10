@@ -2,6 +2,8 @@ package net.dankrushen.aitagsearch.database
 
 import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseIterator
+import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseKeyIterator
+import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseValueIterator
 import org.agrona.DirectBuffer
 import org.agrona.concurrent.UnsafeBuffer
 import org.lmdbjava.Dbi
@@ -32,6 +34,14 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
 
     fun <K, V> iterate(txn: Txn<DirectBuffer>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): TypedPairDatabaseIterator<K, V> {
         return TypedPairDatabaseIterator(this, txn, keyConverter, valueConverter)
+    }
+
+    fun <K> iterateKeys(txn: Txn<DirectBuffer>, keyConverter: DirectBufferConverter<K>): TypedPairDatabaseKeyIterator<K> {
+        return TypedPairDatabaseKeyIterator(this, txn, keyConverter)
+    }
+
+    fun <V> iterateValues(txn: Txn<DirectBuffer>, valueConverter: DirectBufferConverter<V>): TypedPairDatabaseValueIterator<V> {
+        return TypedPairDatabaseValueIterator(this, txn, valueConverter)
     }
 
     fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {
