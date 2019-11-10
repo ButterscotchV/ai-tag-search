@@ -12,9 +12,12 @@ internal class StringArrayConverterTest {
     val expectedSize = (Int.SIZE_BYTES * demoArray.size) + (5 * 3) + 14 + 8
     val demoDirectBuffer = UnsafeBuffer(ByteBuffer.allocateDirect(expectedSize))
 
+    val converter = ArrayConverter.stringArrayConverter
+
+    @Test
     fun readAndWriteWithoutLength() {
-        ArrayConverter.stringArrayConverter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
-        val readArray = ArrayConverter.stringArrayConverter.readWithoutLengthCount(demoDirectBuffer, 0, demoArray.size)
+        converter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
+        val readArray = converter.readWithoutLengthCount(demoDirectBuffer, 0, demoArray.size)
 
         assertEquals(expectedSize, readArray.second)
         assert(demoArray.contentEquals(readArray.first))
@@ -22,15 +25,15 @@ internal class StringArrayConverterTest {
 
     @Test
     fun writeWithoutLength() {
-        val bytesWritten = ArrayConverter.stringArrayConverter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
+        val bytesWritten = converter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
 
         assertEquals(expectedSize, bytesWritten)
     }
 
     @Test
     fun readWithoutLengthCount() {
-        ArrayConverter.stringArrayConverter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
-        val readArray = ArrayConverter.stringArrayConverter.readWithoutLengthCount(demoDirectBuffer, 0, demoArray.size)
+        converter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
+        val readArray = converter.readWithoutLengthCount(demoDirectBuffer, 0, demoArray.size)
 
         assertEquals(expectedSize, readArray.second)
         assert(demoArray.contentEquals(readArray.first))
@@ -38,8 +41,8 @@ internal class StringArrayConverterTest {
 
     @Test
     fun readWithoutLength() {
-        ArrayConverter.stringArrayConverter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
-        val readArray = ArrayConverter.stringArrayConverter.readWithoutLength(demoDirectBuffer, 0, demoArray.size)
+        converter.writeWithoutLength(demoDirectBuffer, 0, demoArray)
+        val readArray = converter.readWithoutLength(demoDirectBuffer, 0, demoArray.size)
 
         assert(demoArray.contentEquals(readArray))
     }
