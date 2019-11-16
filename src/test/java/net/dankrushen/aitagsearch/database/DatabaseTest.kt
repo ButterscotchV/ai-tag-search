@@ -2,7 +2,7 @@ package net.dankrushen.aitagsearch.database
 
 import net.dankrushen.aitagsearch.comparison.CosineDistance
 import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
-import net.dankrushen.aitagsearch.conversion.StringConverter
+import net.dankrushen.aitagsearch.conversion.basetypes.StringConverter
 import net.dankrushen.aitagsearch.database.query.NearestNeighbour
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector

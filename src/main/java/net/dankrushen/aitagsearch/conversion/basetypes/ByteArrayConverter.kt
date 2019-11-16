@@ -1,5 +1,6 @@
-package net.dankrushen.aitagsearch.conversion
+package net.dankrushen.aitagsearch.conversion.basetypes
 
+import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 import org.agrona.concurrent.UnsafeBuffer

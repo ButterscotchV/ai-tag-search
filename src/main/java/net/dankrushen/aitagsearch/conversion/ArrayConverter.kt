@@ -1,5 +1,8 @@
 package net.dankrushen.aitagsearch.conversion
 
+import net.dankrushen.aitagsearch.conversion.basetypes.FloatConverter
+import net.dankrushen.aitagsearch.conversion.basetypes.IntConverter
+import net.dankrushen.aitagsearch.conversion.basetypes.StringConverter
 import net.dankrushen.aitagsearch.conversion.listconversion.FloatListToArrayConverter
 import net.dankrushen.aitagsearch.conversion.listconversion.IntListToArrayConverter
 import net.dankrushen.aitagsearch.conversion.listconversion.ListToArrayConverter

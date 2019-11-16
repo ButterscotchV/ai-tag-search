@@ -1,5 +1,8 @@
 package net.dankrushen.aitagsearch.conversion
 
+import net.dankrushen.aitagsearch.conversion.basetypes.FloatConverter
+import net.dankrushen.aitagsearch.conversion.basetypes.IntConverter
+import net.dankrushen.aitagsearch.conversion.basetypes.StringConverter
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 
