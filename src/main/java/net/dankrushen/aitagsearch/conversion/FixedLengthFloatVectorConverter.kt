@@ -13,11 +13,7 @@ class FixedLengthFloatVectorConverter(val dimension: Int) : FloatVectorConverter
     override fun getSizeWithCount(value: FloatVector): Int = getSize(value)
 
     override fun write(directBuffer: MutableDirectBuffer, index: Int, value: FloatVector, length: Int): Int {
-        var bytesWritten = 0
-
-        bytesWritten += writeWithoutLength(directBuffer, index, value)
-
-        return bytesWritten
+        return writeWithoutLength(directBuffer, index, value)
     }
 
     override fun readCount(directBuffer: DirectBuffer, index: Int): Pair<FloatVector, Int> {

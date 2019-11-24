@@ -44,7 +44,7 @@ class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanc
         var internalMaxDist: Float? = maxDist
         db.dbi.iterate(txn).use {
             for (keyVal in it) {
-                val entryVector = FloatVectorConverter.converter.read(keyVal.`val`(), 0)
+                val entryVector = db.valueConverter.read(keyVal.`val`(), 0)
                 val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                 if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
