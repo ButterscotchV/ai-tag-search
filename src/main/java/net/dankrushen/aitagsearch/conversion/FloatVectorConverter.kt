@@ -4,18 +4,14 @@ import net.dankrushen.aitagsearch.datatypes.FloatVector
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 
-class FloatVectorConverter : DirectBufferConverter<FloatVector>() {
+open class FloatVectorConverter : DirectBufferConverter<FloatVector>() {
     companion object {
         val converter = FloatVectorConverter()
     }
 
-    override fun getLength(value: FloatVector): Int {
-        return value.dimension
-    }
+    override fun getLength(value: FloatVector): Int = value.dimension
 
-    override fun getSize(value: FloatVector): Int {
-        return value.sizeBytes
-    }
+    override fun getSize(value: FloatVector): Int = value.sizeBytes
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: FloatVector): Int {
         var bytesWritten = 0

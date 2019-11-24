@@ -9,13 +9,9 @@ class IntArrayConverter : DirectBufferConverter<IntArray>() {
         val converter = IntArrayConverter()
     }
 
-    override fun getLength(value: IntArray): Int {
-        return value.size
-    }
+    override fun getLength(value: IntArray): Int = value.size
 
-    override fun getSize(value: IntArray): Int {
-        return value.size * Int.SIZE_BYTES
-    }
+    override fun getSize(value: IntArray): Int = value.size * Int.SIZE_BYTES
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: IntArray): Int {
         var bytesWritten = 0

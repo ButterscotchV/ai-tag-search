@@ -9,13 +9,9 @@ class FloatArrayConverter : DirectBufferConverter<FloatArray>() {
         val converter = FloatArrayConverter()
     }
 
-    override fun getLength(value: FloatArray): Int {
-        return value.size
-    }
+    override fun getLength(value: FloatArray): Int = value.size
 
-    override fun getSize(value: FloatArray): Int {
-        return value.size * Int.SIZE_BYTES
-    }
+    override fun getSize(value: FloatArray): Int = value.size * Int.SIZE_BYTES
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: FloatArray): Int {
         var bytesWritten = 0

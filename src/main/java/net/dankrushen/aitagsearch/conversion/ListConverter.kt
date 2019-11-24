@@ -13,13 +13,9 @@ class ListConverter<T>(val converter: DirectBufferConverter<T>) : DirectBufferCo
         val stringListConverter = ListConverter(StringConverter.converter)
     }
 
-    override fun getLength(value: List<T>): Int {
-        return value.size
-    }
+    override fun getLength(value: List<T>): Int = value.size
 
-    override fun getSize(value: List<T>): Int {
-        return value.sumBy { string -> converter.getSizeWithCount(string) }
-    }
+    override fun getSize(value: List<T>): Int = value.sumBy { string -> converter.getSizeWithCount(string) }
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: List<T>): Int {
         var bytesWritten = 0

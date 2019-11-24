@@ -17,13 +17,9 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val listToArray
         val stringArrayConverter = ArrayConverter(StringConverter.converter, StringListToArrayConverter.converter)
     }
 
-    override fun getLength(value: Array<T>): Int {
-        return value.size
-    }
+    override fun getLength(value: Array<T>): Int = value.size
 
-    override fun getSize(value: Array<T>): Int {
-        return value.sumBy { string -> converter.getSizeWithCount(string) }
-    }
+    override fun getSize(value: Array<T>): Int = value.sumBy { string -> converter.getSizeWithCount(string) }
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: Array<T>): Int {
         var bytesWritten = 0
