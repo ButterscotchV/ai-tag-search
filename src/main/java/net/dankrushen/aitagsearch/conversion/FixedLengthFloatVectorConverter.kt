@@ -21,12 +21,7 @@ class FixedLengthFloatVectorConverter(val dimension: Int) : FloatVectorConverter
     }
 
     override fun readCount(directBuffer: DirectBuffer, index: Int): Pair<FloatVector, Int> {
-        var bytesRead = 0
-
-        val value = readWithoutLengthCount(directBuffer, index, dimension)
-        bytesRead += value.second
-
-        return Pair(value.first, bytesRead)
+        return readWithoutLengthCount(directBuffer, index, dimension)
     }
 
     override fun read(directBuffer: DirectBuffer, index: Int): FloatVector {
