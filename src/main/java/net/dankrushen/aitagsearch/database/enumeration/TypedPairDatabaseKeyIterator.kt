@@ -2,7 +2,6 @@ package net.dankrushen.aitagsearch.database.enumeration
 
 import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.database.PairDatabase
-import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import org.agrona.DirectBuffer
 import org.lmdbjava.Txn
 import java.io.Closeable
