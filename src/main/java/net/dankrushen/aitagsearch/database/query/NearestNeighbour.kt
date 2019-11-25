@@ -2,7 +2,6 @@ package net.dankrushen.aitagsearch.database.query
 
 import net.dankrushen.aitagsearch.comparison.DistanceMeasurer
 import net.dankrushen.aitagsearch.comparison.EuclidianDistance
-import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import org.agrona.DirectBuffer
@@ -10,12 +9,7 @@ import org.lmdbjava.Txn
 
 class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
 
-    internal fun convertRawKeyVectorDist(rawKey: DirectBuffer, vector: FloatVector, dist: Float): Pair<Pair<K, FloatVector>, Float> {
-        val key = db.keyConverter.read(rawKey, 0)
-        return Pair(Pair(key, vector), dist)
-    }
-
-    internal fun addIfSmaller(keyVectorDists: Array<Pair<Pair<K, FloatVector>, Float>?>, rawKey: DirectBuffer, vector: FloatVector, dist: Float): Float? {
+    private fun addIfSmaller(keyVectorDists: Array<Pair<Pair<K, FloatVector>, Float>?>, rawKey: DirectBuffer, vector: FloatVector, dist: Float, condition: ((key: K) -> Boolean)?): Float? {
         var maxKeyVectorIndex = 0
 
         for (i in 1 until keyVectorDists.size) {
@@ -30,13 +24,17 @@ class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanc
         val maxKeyVector = keyVectorDists[maxKeyVectorIndex]
 
         if (maxKeyVector == null || dist < maxKeyVector.second) {
-            keyVectorDists[maxKeyVectorIndex] = convertRawKeyVectorDist(rawKey, vector, dist)
+            val key = db.keyConverter.read(rawKey, 0)
+
+            // If the condition is either null or true (not false)
+            if (condition?.invoke(key) != false)
+                keyVectorDists[maxKeyVectorIndex] = Pair(Pair(key, vector), dist)
         }
 
         return maxKeyVector?.second
     }
 
-    fun getNeighbours(txn: Txn<DirectBuffer>, vector: FloatVector, numNeighbours: Int, maxDist: Float? = null, minDist: Float? = null): Array<Pair<Pair<K, FloatVector>, Float>?> {
+    fun getNeighbours(txn: Txn<DirectBuffer>, vector: FloatVector, numNeighbours: Int, condition: ((key: K) -> Boolean)? = null, maxDist: Float? = null, minDist: Float? = null): Array<Pair<Pair<K, FloatVector>, Float>?> {
         require(numNeighbours > 0) { "\"numNeighbours\" must be a value greater than 0" }
 
         val vectorDiffsList = arrayOfNulls<Pair<Pair<K, FloatVector>, Float>>(numNeighbours)
@@ -48,7 +46,7 @@ class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanc
                 val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                 if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
-                    internalMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist) ?: maxDist
+                    internalMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition) ?: maxDist
                 }
             }
         }
