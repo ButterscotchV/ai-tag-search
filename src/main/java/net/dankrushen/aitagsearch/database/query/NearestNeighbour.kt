@@ -46,7 +46,8 @@ class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanc
                 val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                 if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
-                    internalMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition) ?: maxDist
+                    internalMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
+                            ?: maxDist
                 }
             }
         }
