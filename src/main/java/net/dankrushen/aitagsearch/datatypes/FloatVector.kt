@@ -156,7 +156,9 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
 
     operator fun unaryMinus(): FloatVector {
         val newVector = FloatVector(dimension)
-        newVector -= this
+        for (i in 0 until dimension) {
+            newVector[i] = -this[i]
+        }
 
         return newVector
     }
