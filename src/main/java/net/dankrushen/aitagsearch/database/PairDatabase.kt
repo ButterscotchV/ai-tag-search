@@ -89,6 +89,19 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
         return Pair(key, value)
     }
 
+    fun deleteRaw(txn: Txn<DirectBuffer>, key: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {
+        dbi.delete(txn, key)
+
+        if (commitTxn)
+            txn.commit()
+    }
+
+    fun <K> delete(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, commitTxn: Boolean = commitTxnByDef) {
+        val rawKey = keyToDirectBuffer(key, keyConverter)
+
+        deleteRaw(txn, rawKey, commitTxn)
+    }
+
     override fun close() {
         dbi.close()
     }

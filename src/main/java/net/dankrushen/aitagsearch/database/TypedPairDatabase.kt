@@ -37,4 +37,8 @@ class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyCon
     fun getPair(txn: Txn<DirectBuffer>, key: K): Pair<K, V>? {
         return getPair(txn, key, keyConverter, valueConverter)
     }
+
+    fun delete(txn: Txn<DirectBuffer>, key: K, commitTxn: Boolean = commitTxnByDef) {
+        return delete(txn, key, keyConverter, commitTxn)
+    }
 }
