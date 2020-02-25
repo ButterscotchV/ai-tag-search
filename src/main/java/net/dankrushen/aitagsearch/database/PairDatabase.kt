@@ -85,7 +85,11 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val valu
             getRawValue(txn, rawKey) ?: return null
         }
 
-        return valueConverter.read(rawValue, valueIndex)
+        return if (valueLength != null) {
+            valueConverter.readWithoutLength(rawValue, valueIndex, valueLength)
+        } else {
+            valueConverter.read(rawValue, valueIndex)
+        }
     }
 
     fun getRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer): Pair<DirectBuffer, DirectBuffer>? {
