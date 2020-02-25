@@ -6,7 +6,7 @@ import org.agrona.DirectBuffer
 import org.lmdbjava.Txn
 import java.io.Closeable
 
-class TypedPairDatabaseValueIterator<V>(db: PairDatabase, txn: Txn<DirectBuffer>, val valueConverter: DirectBufferConverter<V>) : Iterator<V>, Closeable {
+class TypedPairDatabaseValueIterator<V>(val db: PairDatabase, txn: Txn<DirectBuffer>, val valueConverter: DirectBufferConverter<V>) : Iterator<V>, Closeable {
 
     val rawCursorIterator = db.dbi.iterate(txn)
     val rawIterator = rawCursorIterator.iterator()
@@ -18,7 +18,11 @@ class TypedPairDatabaseValueIterator<V>(db: PairDatabase, txn: Txn<DirectBuffer>
     override fun next(): V {
         val nextRawPair = rawIterator.next()
 
-        return valueConverter.read(nextRawPair.`val`(), 0)
+        return if (db.valueLength != null) {
+            valueConverter.readWithoutLength(nextRawPair.`val`(), db.valueIndex, db.valueLength)
+        } else {
+            valueConverter.read(nextRawPair.`val`(), db.valueIndex)
+        }
     }
 
     override fun close() {
