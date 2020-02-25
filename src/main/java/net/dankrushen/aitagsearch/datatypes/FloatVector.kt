@@ -96,7 +96,7 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
         dims[dimension] = value.toFloat()
     }
 
-    override fun clone(): FloatVector = FloatVector(dims.clone())
+    public override fun clone(): FloatVector = FloatVector(dims.clone())
 
     fun checkDimension(vector: FloatVector) {
         require(dimension == vector.dimension) { "\"vector\" must be of the same dimension as the vector being operated on" }

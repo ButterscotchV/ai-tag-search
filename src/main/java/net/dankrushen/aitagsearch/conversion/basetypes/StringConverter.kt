@@ -29,20 +29,20 @@ class StringConverter : DirectBufferConverter<String>() {
         return ByteArrayConverter.converter.write(directBuffer, index, getStringBytes(value))
     }
 
-    override fun toDirectBuffer(value: String, sizeBytes: Int, length: Int): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), sizeBytes, length)
+    override fun toDirectBuffer(value: String, index: Int, sizeBytes: Int, length: Int): MutableDirectBuffer {
+        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), index, sizeBytes, length)
     }
 
-    override fun toDirectBuffer(value: String): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value))
+    override fun toDirectBuffer(value: String, index: Int): MutableDirectBuffer {
+        return ByteArrayConverter.converter.toDirectBuffer(getStringBytes(value), index)
     }
 
-    override fun toDirectBufferWithoutLength(value: String, sizeBytes: Int): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), sizeBytes)
+    override fun toDirectBufferWithoutLength(value: String, index: Int, sizeBytes: Int): MutableDirectBuffer {
+        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), index, sizeBytes)
     }
 
-    override fun toDirectBufferWithoutLength(value: String): DirectBuffer {
-        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value))
+    override fun toDirectBufferWithoutLength(value: String, index: Int): MutableDirectBuffer {
+        return ByteArrayConverter.converter.toDirectBufferWithoutLength(getStringBytes(value), index)
     }
 
     override fun readWithoutLengthCount(directBuffer: DirectBuffer, index: Int, length: Int): Pair<String, Int> {

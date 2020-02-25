@@ -10,7 +10,7 @@ import net.dankrushen.aitagsearch.conversion.listconversion.StringListToArrayCon
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 
-class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val listToArrayConverter: ListToArrayConverter<T>) : DirectBufferConverter<Array<T>>() {
+class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val listToArrayConverter: ListToArrayConverter<T>, val valueLength: Int? = null) : DirectBufferConverter<Array<T>>() {
     companion object {
         val floatArrayConverter = ArrayConverter(FloatConverter.converter, FloatListToArrayConverter.converter)
         val intArrayConverter = ArrayConverter(IntConverter.converter, IntListToArrayConverter.converter)
@@ -19,13 +19,24 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val listToArray
 
     override fun getLength(value: Array<T>): Int = value.size
 
-    override fun getSize(value: Array<T>): Int = value.sumBy { string -> converter.getSizeWithCount(string) }
+    override fun getSize(value: Array<T>): Int {
+        return if (valueLength != null) {
+            value.sumBy { entry -> converter.getSize(entry) }
+        } else {
+            value.sumBy { entry -> converter.getSizeWithCount(entry) }
+        }
+    }
 
     override fun writeWithoutLength(directBuffer: MutableDirectBuffer, index: Int, value: Array<T>): Int {
         var bytesWritten = 0
 
         for (entry in value) {
-            bytesWritten += converter.write(directBuffer, index + bytesWritten, entry)
+            val curIndex = index + bytesWritten
+            bytesWritten += if (valueLength != null) {
+                converter.writeWithoutLength(directBuffer, curIndex, entry)
+            } else {
+                converter.write(directBuffer, curIndex, entry)
+            }
         }
 
         return bytesWritten
@@ -37,7 +48,13 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val listToArray
         val entryList = mutableListOf<T>()
 
         for (i in 0 until length) {
-            val results = converter.readCount(directBuffer, index + bytesRead)
+            val curIndex = index + bytesRead
+            val results = if (valueLength != null) {
+                converter.readWithoutLengthCount(directBuffer, curIndex, valueLength)
+            } else {
+                converter.readCount(directBuffer, curIndex)
+            }
+
             entryList.add(results.first)
             bytesRead += results.second
         }
@@ -51,7 +68,13 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val listToArray
         val entryList = mutableListOf<T>()
 
         for (i in 0 until length) {
-            val results = converter.readCount(directBuffer, index + bytesRead)
+            val curIndex = index + bytesRead
+            val results = if (valueLength != null) {
+                converter.readWithoutLengthCount(directBuffer, curIndex, valueLength)
+            } else {
+                converter.readCount(directBuffer, curIndex)
+            }
+
             entryList.add(results.first)
             bytesRead += results.second
         }

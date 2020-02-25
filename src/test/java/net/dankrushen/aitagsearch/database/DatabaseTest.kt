@@ -3,7 +3,7 @@ package net.dankrushen.aitagsearch.database
 import net.dankrushen.aitagsearch.comparison.CosineDistance
 import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.conversion.basetypes.StringConverter
-import net.dankrushen.aitagsearch.database.query.NearestNeighbour
+import net.dankrushen.aitagsearch.database.query.BruteNearestNeighbour
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import org.agrona.DirectBuffer
@@ -51,12 +51,13 @@ fun testDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, FloatVect
     println("Original: ")
     println("\tKey: ${demoKeyVector.first}")
     println("\tVector: ${demoKeyVector.second}")
-    println("\tEncoded Vector: ${FloatVectorConverter.converter.toDirectBuffer(demoKeyVector.second).getFloatVector(0)}")
+    println("\tEncoded Vector: ${FloatVectorConverter.converter.toDirectBuffer(demoKeyVector.second, 0).getFloatVector(0)}")
 
     var testKeyVectorResult: Pair<String, FloatVector>? = null
 
     env.txnWrite().use {
-        db.putPair(it, demoKeyVector, commitTxn = true)
+        db.putPair(it, demoKeyVector)
+        it.commit()
     }
 
     env.txnRead().use {
@@ -86,7 +87,7 @@ fun testWritingToDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, 
                 keyVector.second[i] = Math.random()
             }
 
-            db.putPair(txn, keyVector, commitTxn = false)
+            db.putPair(txn, keyVector)
 
             if (keyVectorNum % 100 == 0) {
                 txn.commit()
@@ -105,7 +106,7 @@ fun testNearestNeighbour(env: Env<DirectBuffer>, db: TypedPairDatabase<String, F
     val times = LongArray(sampleCount)
 
     val testVector = FloatVector.ones(128)
-    val nearestNeighbour = NearestNeighbour(db, CosineDistance.measurer)
+    val nearestNeighbour = BruteNearestNeighbour(db, CosineDistance.measurer)
 
     env.txnRead().use {
         for (i in 0 until sampleCount) {

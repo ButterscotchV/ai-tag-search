@@ -8,7 +8,7 @@ import org.agrona.DirectBuffer
 import org.lmdbjava.Env
 import org.lmdbjava.Txn
 
-class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>, commitTxnByDef: Boolean = false) : PairDatabase(env, dbName, commitTxnByDef) {
+class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>, valueIndex: Int = 0, valueLength: Int? = null) : PairDatabase(env, dbName, valueIndex, valueLength) {
 
     fun iterate(txn: Txn<DirectBuffer>): TypedPairDatabaseIterator<K, V> {
         return TypedPairDatabaseIterator(this, txn)
@@ -22,12 +22,12 @@ class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyCon
         return TypedPairDatabaseValueIterator(this, txn, this.valueConverter)
     }
 
-    fun putPair(txn: Txn<DirectBuffer>, key: K, value: V, commitTxn: Boolean = commitTxnByDef) {
-        putPair(txn, key, value, keyConverter, valueConverter, commitTxn)
+    fun putPair(txn: Txn<DirectBuffer>, key: K, value: V) {
+        putPair(txn, key, value, keyConverter, valueConverter)
     }
 
-    fun putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, commitTxn: Boolean = commitTxnByDef) {
-        putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter, commitTxn)
+    fun putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>) {
+        putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter)
     }
 
     fun getValue(txn: Txn<DirectBuffer>, key: K): V? {
@@ -38,7 +38,7 @@ class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyCon
         return getPair(txn, key, keyConverter, valueConverter)
     }
 
-    fun delete(txn: Txn<DirectBuffer>, key: K, commitTxn: Boolean = commitTxnByDef) {
-        return delete(txn, key, keyConverter, commitTxn)
+    fun delete(txn: Txn<DirectBuffer>, key: K) {
+        return delete(txn, key, keyConverter)
     }
 }

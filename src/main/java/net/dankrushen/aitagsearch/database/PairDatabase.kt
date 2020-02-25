@@ -5,6 +5,7 @@ import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseKeyIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseValueIterator
 import org.agrona.DirectBuffer
+import org.agrona.MutableDirectBuffer
 import org.agrona.concurrent.UnsafeBuffer
 import org.lmdbjava.Dbi
 import org.lmdbjava.DbiFlags
@@ -12,24 +13,33 @@ import org.lmdbjava.Env
 import org.lmdbjava.Txn
 import java.io.Closeable
 import java.nio.ByteBuffer
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
-open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var commitTxnByDef: Boolean = false) : Closeable {
+open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val valueIndex: Int = 0, val valueLength: Int? = null) : Closeable {
 
     val dbi: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
 
+    val keyBufferLock = ReentrantLock()
     val syncKeyByteBuffer = ByteBuffer.allocateDirect(env.maxKeySize)
     val syncKeyDirectBuffer = UnsafeBuffer(syncKeyByteBuffer)
 
     fun <K> keyToDirectBuffer(key: K, keyConverter: DirectBufferConverter<K>): DirectBuffer {
-        syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, env.maxKeySize)
-        val bytesWritten = keyConverter.write(syncKeyDirectBuffer, 0, key)
-        syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, bytesWritten)
+        keyBufferLock.withLock {
+            syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, env.maxKeySize)
+            val bytesWritten = keyConverter.write(syncKeyDirectBuffer, 0, key)
+            syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, bytesWritten)
 
-        return syncKeyDirectBuffer
+            return syncKeyDirectBuffer
+        }
     }
 
-    fun <V> valueToDirectBuffer(value: V, valueConverter: DirectBufferConverter<V>): DirectBuffer {
-        return valueConverter.toDirectBuffer(value)
+    fun <V> valueToDirectBuffer(value: V, valueConverter: DirectBufferConverter<V>): MutableDirectBuffer {
+        return if (valueLength != null) {
+            valueConverter.toDirectBufferWithoutLength(value, valueIndex)
+        } else {
+            valueConverter.toDirectBuffer(value, valueIndex)
+        }
     }
 
     fun <K, V> iterate(txn: Txn<DirectBuffer>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): TypedPairDatabaseIterator<K, V> {
@@ -44,26 +54,25 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
         return TypedPairDatabaseValueIterator(this, txn, valueConverter)
     }
 
-    fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {
+    fun putRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer, value: DirectBuffer) {
         dbi.put(txn, key, value)
-
-        if (commitTxn)
-            txn.commit()
     }
 
-    fun putRawPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<DirectBuffer, DirectBuffer>, commitTxn: Boolean = commitTxnByDef) {
-        putRawPair(txn, keyValuePair.first, keyValuePair.second, commitTxn)
+    fun putRawPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<DirectBuffer, DirectBuffer>) {
+        putRawPair(txn, keyValuePair.first, keyValuePair.second)
     }
 
-    fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = commitTxnByDef) {
-        val rawKey = keyToDirectBuffer(key, keyConverter)
-        val rawValue = valueToDirectBuffer(value, valueConverter)
+    fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>) {
+        keyBufferLock.withLock {
+            val rawKey = keyToDirectBuffer(key, keyConverter)
+            val rawValue = valueToDirectBuffer(value, valueConverter)
 
-        putRawPair(txn, rawKey, rawValue, commitTxn)
+            putRawPair(txn, rawKey, rawValue)
+        }
     }
 
-    fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>, commitTxn: Boolean = commitTxnByDef) {
-        putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter, commitTxn)
+    fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>) {
+        putPair(txn, keyValuePair.first, keyValuePair.second, keyConverter, valueConverter)
     }
 
     fun getRawValue(txn: Txn<DirectBuffer>, key: DirectBuffer): DirectBuffer? {
@@ -71,10 +80,12 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
     }
 
     fun <K, V> getValue(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): V? {
-        val rawKey = keyToDirectBuffer(key, keyConverter)
-        val rawValue = getRawValue(txn, rawKey) ?: return null
+        val rawValue = keyBufferLock.withLock {
+            val rawKey = keyToDirectBuffer(key, keyConverter)
+            getRawValue(txn, rawKey) ?: return null
+        }
 
-        return valueConverter.read(rawValue, 0)
+        return valueConverter.read(rawValue, valueIndex)
     }
 
     fun getRawPair(txn: Txn<DirectBuffer>, key: DirectBuffer): Pair<DirectBuffer, DirectBuffer>? {
@@ -89,17 +100,14 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, var comm
         return Pair(key, value)
     }
 
-    fun deleteRaw(txn: Txn<DirectBuffer>, key: DirectBuffer, commitTxn: Boolean = commitTxnByDef) {
+    fun deleteRaw(txn: Txn<DirectBuffer>, key: DirectBuffer) {
         dbi.delete(txn, key)
-
-        if (commitTxn)
-            txn.commit()
     }
 
-    fun <K> delete(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, commitTxn: Boolean = commitTxnByDef) {
+    fun <K> delete(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>) {
         val rawKey = keyToDirectBuffer(key, keyConverter)
 
-        deleteRaw(txn, rawKey, commitTxn)
+        deleteRaw(txn, rawKey)
     }
 
     override fun close() {

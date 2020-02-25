@@ -7,7 +7,7 @@ import net.dankrushen.aitagsearch.datatypes.FloatVector
 import org.agrona.DirectBuffer
 import org.lmdbjava.Txn
 
-class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
+class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
 
     private fun addIfSmaller(keyVectorDists: Array<Pair<Pair<K, FloatVector>, Float>?>, rawKey: DirectBuffer, vector: FloatVector, dist: Float, condition: ((key: K) -> Boolean)?): Float? {
         var maxKeyVectorIndex = 0
@@ -46,8 +46,10 @@ class NearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, var distanc
                 val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                 if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
-                    internalMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
-                            ?: maxDist
+                    val newMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
+
+                    if (newMaxDist != null)
+                        internalMaxDist = newMaxDist
                 }
             }
         }
