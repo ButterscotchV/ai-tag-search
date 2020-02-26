@@ -4,6 +4,7 @@ import net.dankrushen.aitagsearch.comparison.CosineDistance
 import net.dankrushen.aitagsearch.conversion.FloatVectorConverter
 import net.dankrushen.aitagsearch.conversion.basetypes.StringConverter
 import net.dankrushen.aitagsearch.database.query.BruteNearestNeighbour
+import net.dankrushen.aitagsearch.database.transaction.ThreadLocalTransactionGenerator
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 import net.dankrushen.aitagsearch.extensions.getFloatVector
 import org.agrona.DirectBuffer
@@ -29,7 +30,7 @@ fun main() {
     val env = DatabaseUtils.createEnv(File("C:\\Users\\Dankrushen\\Desktop\\NewDatabase"), bytesInGb * 2, 1)
 
     env.use {
-        val db = TypedPairDatabase(env, "Test", StringConverter.converter, FloatVectorConverter.converter)
+        val db = TypedPairDatabase(env, "Test", StringConverter.converter, FloatVectorConverter.converter, ThreadLocalTransactionGenerator(env))
 
         db.use {
             //testDatabase(env, db)
@@ -51,16 +52,16 @@ fun testDatabase(env: Env<DirectBuffer>, db: TypedPairDatabase<String, FloatVect
     println("Original: ")
     println("\tKey: ${demoKeyVector.first}")
     println("\tVector: ${demoKeyVector.second}")
-    println("\tEncoded Vector: ${FloatVectorConverter.converter.toDirectBuffer(demoKeyVector.second, 0).getFloatVector(0)}")
+    println("\tEncoded Vector: ${FloatVectorConverter.converter.toDirectBuffer(0, demoKeyVector.second).getFloatVector(0)}")
 
     var testKeyVectorResult: Pair<String, FloatVector>? = null
 
-    env.txnWrite().use {
+    db.txnWrite {
         db.putPair(it, demoKeyVector)
         it.commit()
     }
 
-    env.txnRead().use {
+    db.txnRead {
         testKeyVectorResult = db.getPair(it, demoKeyVector.first)
     }
 
@@ -108,7 +109,7 @@ fun testNearestNeighbour(env: Env<DirectBuffer>, db: TypedPairDatabase<String, F
     val testVector = FloatVector.ones(128)
     val nearestNeighbour = BruteNearestNeighbour(db, CosineDistance.measurer)
 
-    env.txnRead().use {
+    db.txnRead {
         for (i in 0 until sampleCount) {
             times[i] = time("Fetching $numNeighbours nearest neighbour(s)") {
                 val neighbours = nearestNeighbour.getNeighbours(it, testVector, numNeighbours)

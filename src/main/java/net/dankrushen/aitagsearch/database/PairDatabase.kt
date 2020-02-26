@@ -4,6 +4,8 @@ import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseKeyIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseValueIterator
+import net.dankrushen.aitagsearch.database.transaction.ThreadLocalTransactionGenerator
+import net.dankrushen.aitagsearch.database.transaction.TransactionGenerator
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
 import org.agrona.concurrent.UnsafeBuffer
@@ -13,32 +15,29 @@ import org.lmdbjava.Env
 import org.lmdbjava.Txn
 import java.io.Closeable
 import java.nio.ByteBuffer
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
-open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val valueIndex: Int = 0, val valueLength: Int? = null) : Closeable {
+
+open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val transactionGenerator: TransactionGenerator, val valueIndex: Int = 0, val valueLength: Int? = null) : Closeable {
 
     val dbi: Dbi<DirectBuffer> = env.openDbi(dbName, DbiFlags.MDB_CREATE)
 
-    val keyBufferLock = ReentrantLock()
-    val syncKeyByteBuffer = ByteBuffer.allocateDirect(env.maxKeySize)
-    val syncKeyDirectBuffer = UnsafeBuffer(syncKeyByteBuffer)
+    val keyBuffers = ThreadLocal.withInitial { UnsafeBuffer(ByteBuffer.allocateDirect(env.maxKeySize)) }
 
     fun <K> keyToDirectBuffer(key: K, keyConverter: DirectBufferConverter<K>): DirectBuffer {
-        keyBufferLock.withLock {
-            syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, env.maxKeySize)
-            val bytesWritten = keyConverter.write(syncKeyDirectBuffer, 0, key)
-            syncKeyDirectBuffer.wrap(syncKeyByteBuffer, 0, bytesWritten)
+        val keyBuffer = keyBuffers.get()
 
-            return syncKeyDirectBuffer
-        }
+        keyBuffer.wrap(keyBuffer.byteBuffer(), 0, env.maxKeySize)
+        val bytesWritten = keyConverter.write(keyBuffer, 0, key)
+        keyBuffer.wrap(keyBuffer.byteBuffer(), 0, bytesWritten)
+
+        return keyBuffer
     }
 
     fun <V> valueToDirectBuffer(value: V, valueConverter: DirectBufferConverter<V>): MutableDirectBuffer {
         return if (valueLength != null) {
-            valueConverter.toDirectBufferWithoutLength(value, valueIndex)
+            valueConverter.toDirectBufferWithoutLength(valueIndex, value)
         } else {
-            valueConverter.toDirectBuffer(value, valueIndex)
+            valueConverter.toDirectBuffer(valueIndex, value)
         }
     }
 
@@ -63,12 +62,10 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val valu
     }
 
     fun <K, V> putPair(txn: Txn<DirectBuffer>, key: K, value: V, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>) {
-        keyBufferLock.withLock {
-            val rawKey = keyToDirectBuffer(key, keyConverter)
-            val rawValue = valueToDirectBuffer(value, valueConverter)
+        val rawKey = keyToDirectBuffer(key, keyConverter)
+        val rawValue = valueToDirectBuffer(value, valueConverter)
 
-            putRawPair(txn, rawKey, rawValue)
-        }
+        putRawPair(txn, rawKey, rawValue)
     }
 
     fun <K, V> putPair(txn: Txn<DirectBuffer>, keyValuePair: Pair<K, V>, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>) {
@@ -80,10 +77,8 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val valu
     }
 
     fun <K, V> getValue(txn: Txn<DirectBuffer>, key: K, keyConverter: DirectBufferConverter<K>, valueConverter: DirectBufferConverter<V>): V? {
-        val rawValue = keyBufferLock.withLock {
-            val rawKey = keyToDirectBuffer(key, keyConverter)
-            getRawValue(txn, rawKey) ?: return null
-        }
+        val rawKey = keyToDirectBuffer(key, keyConverter)
+        val rawValue = getRawValue(txn, rawKey) ?: return null
 
         return if (valueLength != null) {
             valueConverter.readWithoutLength(rawValue, valueIndex, valueLength)

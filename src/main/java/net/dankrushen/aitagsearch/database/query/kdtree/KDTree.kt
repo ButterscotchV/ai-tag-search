@@ -18,18 +18,11 @@ package net.dankrushen.aitagsearch.database.query.kdtree
 
 import net.dankrushen.aitagsearch.comparison.DistanceMeasurer
 import net.dankrushen.aitagsearch.comparison.EuclidianDistance
+import net.dankrushen.aitagsearch.database.query.kdtree.node.TreeNode
+import net.dankrushen.aitagsearch.database.query.kdtree.node.TreeNodeGenerator
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 
-class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
-    data class TreeNode<K>(val splitDimension: Int, val vector: FloatVector, val value: K) {
-        var left: TreeNode<K>? = null
-        var right: TreeNode<K>? = null
-
-        fun splitValue(): Float {
-            return vector[splitDimension]
-        }
-    }
-
+class KDTree<K>(val treeNodeGenerator: TreeNodeGenerator<K> = TreeNodeGenerator(), val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
     private val treeNodes: MutableList<TreeNode<K>> = mutableListOf()
     private var root: TreeNode<K>? = null
     private var size = 0
@@ -44,7 +37,7 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
 
         // shortcut for empty tree
         if (treeRoot == null) {
-            root = TreeNode(getSplitDimension(vec, 0), vec, value)
+            root = treeNodeGenerator.generateTreeNode(value, getSplitDimension(vec, 0), vec)
             size++
             return
         }
@@ -57,7 +50,7 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
 
         // traverse the tree to the free spot that matches the dimension
         while (true) {
-            right = current.splitValue() <= vec[current.splitDimension]
+            right = current.splitValue <= vec[current.splitIndex]
             val next = if (right) current.right else current.left
             current = next ?: break
             level++
@@ -67,7 +60,7 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
 
         // do the "real" insert
         // note that current in this case is the parent
-        val node = TreeNode(splitDimension, vec, value)
+        val node = treeNodeGenerator.generateTreeNode(value, splitDimension, vec)
 
         treeNodes.add(node)
 
@@ -82,7 +75,7 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
 
     fun balance() {
         treeNodes.sortBy { treeNode ->
-            treeNode.vector[treeNode.splitDimension]
+            treeNode.splitValue
         }
 
         // do an inverse binary search to build up the tree from the root
@@ -146,13 +139,10 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
                                       keyVectorDists: Array<Pair<Pair<K, FloatVector>, Float>?>): Float? {
         var internalMaxDist = maxDist
 
-        val splitDim = current.splitDimension
-        val pivot: FloatVector = current.vector
-
         val rightHyperRectangle = HyperRectangle(leftHyperRectangle.min.clone(), leftHyperRectangle.max.clone())
 
-        leftHyperRectangle.max[splitDim] = pivot[splitDim]
-        rightHyperRectangle.min[splitDim] = pivot[splitDim]
+        leftHyperRectangle.max[current.splitIndex] = current.splitValue
+        rightHyperRectangle.min[current.splitIndex] = current.splitValue
 
         val nearestNode: TreeNode<K>?
         val nearestHyperRectangle: HyperRectangle?
@@ -161,7 +151,7 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
         val furthestHyperRectangle: HyperRectangle?
 
         // If left is nearest
-        if (vector[splitDim] > pivot[splitDim]) {
+        if (vector[current.splitIndex] > current.splitValue) {
             nearestNode = current.left
             nearestHyperRectangle = leftHyperRectangle
 
@@ -184,10 +174,16 @@ class KDTree<K>(val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measu
 
         val closestDistance = distanceMeasurer.calcDistance(furthestHyperRectangle.closestPoint(vector), vector)
         if ((internalMaxDist == null || closestDistance < internalMaxDist) && (minDist == null || closestDistance > minDist)) {
+            // In the case that the vector isn't properly retrieved (could happen with database)
+            val pivot = try {
+                current.vector
+            } catch (e: Throwable) {
+                return internalMaxDist
+            }
 
             val distancePivotToTarget: Float = distanceMeasurer.calcDistance(pivot, vector)
             if ((internalMaxDist == null || distancePivotToTarget < internalMaxDist) && (minDist == null || distancePivotToTarget > minDist)) {
-                val newMaxDist = addIfSmaller(keyVectorDists, current.value, current.vector, distancePivotToTarget, condition)
+                val newMaxDist = addIfSmaller(keyVectorDists, current.value, pivot, distancePivotToTarget, condition)
 
                 if (newMaxDist != null)
                     internalMaxDist = newMaxDist

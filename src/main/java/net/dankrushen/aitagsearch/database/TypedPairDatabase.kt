@@ -4,11 +4,13 @@ import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseKeyIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseValueIterator
+import net.dankrushen.aitagsearch.database.transaction.ThreadLocalTransactionGenerator
+import net.dankrushen.aitagsearch.database.transaction.TransactionGenerator
 import org.agrona.DirectBuffer
 import org.lmdbjava.Env
 import org.lmdbjava.Txn
 
-class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>, valueIndex: Int = 0, valueLength: Int? = null) : PairDatabase(env, dbName, valueIndex, valueLength) {
+class TypedPairDatabase<K, V>(env: Env<DirectBuffer>, dbName: String, val keyConverter: DirectBufferConverter<K>, val valueConverter: DirectBufferConverter<V>, transactionGenerator: TransactionGenerator, valueIndex: Int = 0, valueLength: Int? = null) : PairDatabase(env, dbName, transactionGenerator, valueIndex, valueLength) {
 
     fun iterate(txn: Txn<DirectBuffer>): TypedPairDatabaseIterator<K, V> {
         return TypedPairDatabaseIterator(this, txn)

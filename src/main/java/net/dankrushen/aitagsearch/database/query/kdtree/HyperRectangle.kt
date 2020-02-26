@@ -18,7 +18,7 @@ package net.dankrushen.aitagsearch.database.query.kdtree
 
 import net.dankrushen.aitagsearch.datatypes.FloatVector
 
-data class HyperRectangle(var min: FloatVector, var max: FloatVector) {
+data class HyperRectangle(var min: FloatVector, var max: FloatVector) : Cloneable {
 
     companion object {
         fun infiniteHyperRectangle(dimension: Int): HyperRectangle {
@@ -32,6 +32,8 @@ data class HyperRectangle(var min: FloatVector, var max: FloatVector) {
             return HyperRectangle(min, max)
         }
     }
+
+    public override fun clone(): HyperRectangle = HyperRectangle(min.clone(), max.clone())
 
     fun closestPoint(t: FloatVector): FloatVector {
         val p = FloatVector(t.dimension)
