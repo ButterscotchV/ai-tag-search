@@ -39,18 +39,31 @@ class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val di
 
         val vectorDiffsList = arrayOfNulls<Pair<Pair<K, FloatVector>, Float>>(numNeighbours)
 
-        val useValueLength = db.valueLength != null
         var internalMaxDist: Float? = maxDist
         db.dbi.iterate(txn).use {
-            for (keyVal in it) {
-                val entryVector = if (useValueLength) db.valueConverter.readWithoutLength(keyVal.`val`(), db.valueIndex, db.valueLength!!) else db.valueConverter.read(keyVal.`val`(), db.valueIndex)
-                val dist = distanceMeasurer.calcDistance(vector, entryVector)
+            if (db.valueLength != null) {
+                for (keyVal in it) {
+                    val entryVector = db.valueConverter.readWithoutLength(keyVal.`val`(), db.valueIndex, db.valueLength)
+                    val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
-                if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
-                    val newMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
+                    if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
+                        val newMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
 
-                    if (newMaxDist != null)
-                        internalMaxDist = newMaxDist
+                        if (newMaxDist != null)
+                            internalMaxDist = newMaxDist
+                    }
+                }
+            } else {
+                for (keyVal in it) {
+                    val entryVector = db.valueConverter.read(keyVal.`val`(), db.valueIndex)
+                    val dist = distanceMeasurer.calcDistance(vector, entryVector)
+
+                    if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
+                        val newMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
+
+                        if (newMaxDist != null)
+                            internalMaxDist = newMaxDist
+                    }
                 }
             }
         }

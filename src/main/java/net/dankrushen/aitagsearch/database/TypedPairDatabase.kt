@@ -4,7 +4,6 @@ import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseKeyIterator
 import net.dankrushen.aitagsearch.database.enumeration.TypedPairDatabaseValueIterator
-import net.dankrushen.aitagsearch.database.transaction.ThreadLocalTransactionGenerator
 import net.dankrushen.aitagsearch.database.transaction.TransactionGenerator
 import org.agrona.DirectBuffer
 import org.lmdbjava.Env
