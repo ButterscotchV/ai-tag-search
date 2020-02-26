@@ -42,7 +42,7 @@ class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val di
         var internalMaxDist: Float? = maxDist
         db.dbi.iterate(txn).use {
             for (keyVal in it) {
-                val entryVector = db.valueConverter.read(keyVal.`val`(), 0)
+                val entryVector = if (db.valueLength != null) db.valueConverter.readWithoutLength(keyVal.`val`(), db.valueIndex, db.valueLength) else db.valueConverter.read(keyVal.`val`(), db.valueIndex)
                 val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                 if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
