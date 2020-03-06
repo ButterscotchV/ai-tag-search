@@ -71,9 +71,6 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
     val magnitude: Float
         get() = sqrt(sqrMagnitude)
 
-    val normalized: FloatVector
-        get() = this / magnitude
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -191,5 +188,13 @@ data class FloatVector(val dims: FloatArray) : Cloneable {
         for (i in 0 until dimension) {
             this[i] /= value.toFloat()
         }
+    }
+
+    fun normalize(): FloatVector {
+        return this / magnitude
+    }
+
+    fun normalizeAssign() {
+        this /= magnitude
     }
 }
