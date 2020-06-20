@@ -45,14 +45,14 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val valueLength
     override fun readWithoutLengthCount(directBuffer: DirectBuffer, index: Int, length: Int): Pair<Array<T>, Int> {
         var bytesRead = 0
 
-        val entryList = ArrayList<T>(length)
+        val entryArray = baseArray.copyOf(length)
 
         if (valueLength != null) {
             for (i in 0 until length) {
                 val curIndex = index + bytesRead
                 val results = converter.readWithoutLengthCount(directBuffer, curIndex, valueLength)
 
-                entryList.add(results.first)
+                entryArray[i] = results.first
                 bytesRead += results.second
             }
         } else {
@@ -60,25 +60,27 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val valueLength
                 val curIndex = index + bytesRead
                 val results = converter.readCount(directBuffer, curIndex)
 
-                entryList.add(results.first)
+                entryArray[i] = results.first
                 bytesRead += results.second
             }
         }
 
-        return Pair(entryList.toArray(baseArray), bytesRead)
+        // Forcefully cast as not null
+        @Suppress("UNCHECKED_CAST")
+        return Pair(entryArray as Array<T>, bytesRead)
     }
 
     override fun readWithoutLength(directBuffer: DirectBuffer, index: Int, length: Int): Array<T> {
         var bytesRead = 0
 
-        val entryList = ArrayList<T>(length)
+        val entryArray = baseArray.copyOf(length)
 
         if (valueLength != null) {
             for (i in 0 until length) {
                 val curIndex = index + bytesRead
                 val results = converter.readWithoutLengthCount(directBuffer, curIndex, valueLength)
 
-                entryList.add(results.first)
+                entryArray[i] = results.first
                 bytesRead += results.second
             }
         } else {
@@ -86,11 +88,13 @@ class ArrayConverter<T>(val converter: DirectBufferConverter<T>, val valueLength
                 val curIndex = index + bytesRead
                 val results = converter.readCount(directBuffer, curIndex)
 
-                entryList.add(results.first)
+                entryArray[i] = results.first
                 bytesRead += results.second
             }
         }
 
-        return entryList.toArray(baseArray)
+        // Forcefully cast as not null
+        @Suppress("UNCHECKED_CAST")
+        return entryArray as Array<T>
     }
 }

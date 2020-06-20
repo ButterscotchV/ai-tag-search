@@ -9,14 +9,13 @@ import java.io.Closeable
 class TypedPairDatabaseKeyIterator<K>(db: PairDatabase, txn: Txn<DirectBuffer>, val keyConverter: DirectBufferConverter<K>) : Iterator<K>, Closeable {
 
     val rawCursorIterator = db.dbi.iterate(txn)
-    val rawIterator = rawCursorIterator.iterator()
 
     override fun hasNext(): Boolean {
-        return rawIterator.hasNext()
+        return rawCursorIterator.hasNext()
     }
 
     override fun next(): K {
-        val nextRawPair = rawIterator.next()
+        val nextRawPair = rawCursorIterator.next()
 
         return keyConverter.read(nextRawPair.key(), 0)
     }

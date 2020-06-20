@@ -12,14 +12,13 @@ class TypedPairDatabaseIterator<K, V>(val db: PairDatabase, txn: Txn<DirectBuffe
     constructor(db: TypedPairDatabase<K, V>, txn: Txn<DirectBuffer>) : this(db, txn, db.keyConverter, db.valueConverter)
 
     val rawCursorIterator = db.dbi.iterate(txn)
-    val rawIterator = rawCursorIterator.iterator()
 
     override fun hasNext(): Boolean {
-        return rawIterator.hasNext()
+        return rawCursorIterator.hasNext()
     }
 
     override fun next(): Pair<K, V> {
-        val nextRawPair = rawIterator.next()
+        val nextRawPair = rawCursorIterator.next()
 
         val key = keyConverter.read(nextRawPair.key(), 0)
         val value = if (db.valueLength != null) {
