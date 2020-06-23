@@ -1,7 +1,7 @@
 package net.dankrushen.aitagsearch.conversion
 
 import org.agrona.concurrent.UnsafeBuffer
-import org.junit.jupiter.api.Test
+import org.junit.Test
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
 
