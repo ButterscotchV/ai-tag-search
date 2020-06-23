@@ -7,37 +7,47 @@ import net.dankrushen.aitagsearch.datatypes.FloatVector
 import org.agrona.DirectBuffer
 import org.lmdbjava.Txn
 
-class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) {
+// Fake constructor to automatically provide a base array
+@Suppress("FunctionName")
+inline fun <reified K> BruteNearestNeighbour(db: TypedPairDatabase<K, FloatVector>, distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer) = BruteNearestNeighbour(db, distanceMeasurer, emptyArray())
 
-    private fun addIfSmaller(keyVectorDists: Array<Pair<Pair<K, FloatVector>, Float>?>, rawKey: DirectBuffer, vector: FloatVector, dist: Float, condition: ((key: K) -> Boolean)?): Float? {
-        var maxKeyVectorIndex = 0
+class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val distanceMeasurer: DistanceMeasurer = EuclidianDistance.measurer, private val baseArray: Array<K>) {
 
-        for (i in 1 until keyVectorDists.size) {
-            val maxKeyVector = keyVectorDists[maxKeyVectorIndex] ?: break
-            val curKeyVector = keyVectorDists[i]
+    private fun addIfSmaller(values: Array<K?>, vectors: Array<FloatVector?>, distances: FloatArray, rawKey: DirectBuffer, vector: FloatVector, dist: Float, condition: ((key: K) -> Boolean)?): Float? {
+        var maxIndex = 0
+        var maxDist: Float? = null
 
-            if (curKeyVector == null || maxKeyVector.second < curKeyVector.second) {
-                maxKeyVectorIndex = i
+        for (i in values.indices) {
+            if (values[i] == null) {
+                maxIndex = i
+                maxDist = null
+                break
+            } else if (distances[maxIndex] < distances[i]) {
+                maxIndex = i
+                maxDist = distances[i]
             }
         }
 
-        val maxKeyVector = keyVectorDists[maxKeyVectorIndex]
-
-        if (maxKeyVector == null || dist < maxKeyVector.second) {
+        if (maxDist == null || dist < maxDist) {
             val key = db.keyConverter.read(rawKey, 0)
 
             // If the condition is either null or true (not false)
-            if (condition?.invoke(key) != false)
-                keyVectorDists[maxKeyVectorIndex] = Pair(Pair(key, vector), dist)
+            if (condition?.invoke(key) != false) {
+                values[maxIndex] = key
+                vectors[maxIndex] = vector
+                distances[maxIndex] = dist
+            }
         }
 
-        return maxKeyVector?.second
+        return maxDist
     }
 
-    fun getNeighbours(txn: Txn<DirectBuffer>, vector: FloatVector, numNeighbours: Int, condition: ((key: K) -> Boolean)? = null, maxDist: Float? = null, minDist: Float? = null): Array<Pair<Pair<K, FloatVector>, Float>?> {
+    fun getNeighbours(txn: Txn<DirectBuffer>, vector: FloatVector, numNeighbours: Int, condition: ((key: K) -> Boolean)? = null, maxDist: Float? = null, minDist: Float? = null, sorted: Boolean = true): Array<Pair<Pair<K, FloatVector>, Float>?> {
         require(numNeighbours > 0) { "\"numNeighbours\" must be a value greater than 0" }
 
-        val vectorDiffsList = arrayOfNulls<Pair<Pair<K, FloatVector>, Float>>(numNeighbours)
+        val values = baseArray.copyOf(numNeighbours)
+        val vectors = arrayOfNulls<FloatVector>(numNeighbours)
+        val distances = FloatArray(numNeighbours)
 
         var internalMaxDist: Float? = maxDist
         db.dbi.iterate(txn).use {
@@ -47,7 +57,7 @@ class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val di
                     val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                     if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
-                        val newMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
+                        val newMaxDist = addIfSmaller(values, vectors, distances, keyVal.key(), entryVector, dist, condition)
 
                         if (newMaxDist != null)
                             internalMaxDist = newMaxDist
@@ -59,7 +69,7 @@ class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val di
                     val dist = distanceMeasurer.calcDistance(vector, entryVector)
 
                     if ((internalMaxDist == null || dist < internalMaxDist!!) && (minDist == null || dist > minDist)) {
-                        val newMaxDist = addIfSmaller(vectorDiffsList, keyVal.key(), entryVector, dist, condition)
+                        val newMaxDist = addIfSmaller(values, vectors, distances, keyVal.key(), entryVector, dist, condition)
 
                         if (newMaxDist != null)
                             internalMaxDist = newMaxDist
@@ -68,8 +78,18 @@ class BruteNearestNeighbour<K>(val db: TypedPairDatabase<K, FloatVector>, val di
             }
         }
 
-        vectorDiffsList.sortBy { keyVectorDist -> keyVectorDist?.second }
+        val vectorDiffs = arrayOfNulls<Pair<Pair<K, FloatVector>, Float>>(numNeighbours)
 
-        return vectorDiffsList
+        for (i in values.indices) {
+            if (values[i] == null)
+                continue
+
+            vectorDiffs[i] = Pair(Pair(values[i]!!, vectors[i]!!), distances[i])
+        }
+
+        if (sorted)
+            vectorDiffs.sortBy { keyVectorDist -> keyVectorDist?.second }
+
+        return vectorDiffs
     }
 }
