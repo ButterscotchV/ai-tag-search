@@ -2,13 +2,17 @@ package net.dankrushen.aitagsearch.database.enumeration
 
 import net.dankrushen.aitagsearch.conversion.DirectBufferConverter
 import net.dankrushen.aitagsearch.database.PairDatabase
+import net.dankrushen.aitagsearch.database.TypedPairDatabase
 import org.agrona.DirectBuffer
+import org.lmdbjava.CursorIterator
 import org.lmdbjava.Txn
 import java.io.Closeable
 
 class TypedPairDatabaseValueIterator<V>(val db: PairDatabase, txn: Txn<DirectBuffer>, val valueConverter: DirectBufferConverter<V>) : Iterator<V>, Closeable {
 
-    val rawCursorIterator = db.dbi.iterate(txn)
+    constructor(db: TypedPairDatabase<*, V>, txn: Txn<DirectBuffer>) : this(db, txn, db.valueConverter)
+
+    private val rawCursorIterator: CursorIterator<DirectBuffer> = db.dbi.iterate(txn)
 
     override fun hasNext(): Boolean {
         return rawCursorIterator.hasNext()
@@ -17,11 +21,7 @@ class TypedPairDatabaseValueIterator<V>(val db: PairDatabase, txn: Txn<DirectBuf
     override fun next(): V {
         val nextRawPair = rawCursorIterator.next()
 
-        return if (db.valueLength != null) {
-            valueConverter.readWithoutLength(nextRawPair.`val`(), db.valueIndex, db.valueLength)
-        } else {
-            valueConverter.read(nextRawPair.`val`(), db.valueIndex)
-        }
+        return db.valueFromDirectBuffer(nextRawPair.`val`(), valueConverter)
     }
 
     override fun close() {

@@ -32,11 +32,23 @@ open class PairDatabase(val env: Env<DirectBuffer>, val dbName: String, val tran
         return keyBuffer
     }
 
+    fun <K> keyFromDirectBuffer(directBuffer: DirectBuffer, keyConverter: DirectBufferConverter<K>): K {
+        return keyConverter.read(directBuffer, 0)
+    }
+
     fun <V> valueToDirectBuffer(value: V, valueConverter: DirectBufferConverter<V>): MutableDirectBuffer {
         return if (valueLength != null) {
             valueConverter.toDirectBufferWithoutLength(valueIndex, value)
         } else {
             valueConverter.toDirectBuffer(valueIndex, value)
+        }
+    }
+
+    fun <V> valueFromDirectBuffer(directBuffer: DirectBuffer, valueConverter: DirectBufferConverter<V>): V {
+        return if (valueLength != null) {
+            valueConverter.readWithoutLength(directBuffer, valueIndex, valueLength)
+        } else {
+            valueConverter.read(directBuffer, valueIndex)
         }
     }
 

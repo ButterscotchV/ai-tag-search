@@ -3,7 +3,6 @@ package net.dankrushen.aitagsearch.conversion
 import net.dankrushen.aitagsearch.conversion.basetypes.StringConverter
 import org.agrona.DirectBuffer
 import org.agrona.MutableDirectBuffer
-import java.util.*
 
 // Fake constructor to automatically provide a base array
 @Suppress("FunctionName")
